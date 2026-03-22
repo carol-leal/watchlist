@@ -2,19 +2,14 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/better-auth";
 import { getSession } from "~/server/better-auth/server";
 import { api, HydrateClient } from "~/trpc/server";
 import styles from "./index.module.css";
 
 export default async function Home() {
-  /*   const hello = await api.post.hello({ text: "from tRPC" });
-   */ const session = await getSession();
-
-  /*   if (session?.user) {
-    void api.post.getLatest.prefetch();
-  } */
+  const hello = await api.post.hello({ text: "from tRPC" });
+  const session = await getSession();
 
   return (
     <HydrateClient>
@@ -48,9 +43,9 @@ export default async function Home() {
             </Link>
           </div>
           <div className={styles.showcaseContainer}>
-            {/*  <p className={styles.showcaseText}>
+            <p className={styles.showcaseText}>
               {hello ? hello.greeting : "Loading tRPC query..."}
-            </p> */}
+            </p>
 
             <div className={styles.authContainer}>
               <p className={styles.showcaseText}>
@@ -92,8 +87,6 @@ export default async function Home() {
               )}
             </div>
           </div>
-
-          {session?.user && <LatestPost />}
         </div>
       </main>
     </HydrateClient>
