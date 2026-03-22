@@ -9,12 +9,12 @@ import { api, HydrateClient } from "~/trpc/server";
 import styles from "./index.module.css";
 
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
-  const session = await getSession();
+  /*   const hello = await api.post.hello({ text: "from tRPC" });
+   */ const session = await getSession();
 
-  if (session?.user) {
+  /*   if (session?.user) {
     void api.post.getLatest.prefetch();
-  }
+  } */
 
   return (
     <HydrateClient>
@@ -48,9 +48,9 @@ export default async function Home() {
             </Link>
           </div>
           <div className={styles.showcaseContainer}>
-            <p className={styles.showcaseText}>
+            {/*  <p className={styles.showcaseText}>
               {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
+            </p> */}
 
             <div className={styles.authContainer}>
               <p className={styles.showcaseText}>

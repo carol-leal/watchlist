@@ -15,32 +15,102 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
+model User {
+  id              String    @id
+  name            String //@db.Text
+  email           String
+  emailVerified   Boolean   @default(false)
+  image           String? //@db.Text
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  playlistUsers   PlaylistUser[]
+  createdPlaylists Playlist[] @relation("createdBy")
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Playlist {
   id        String   @id @default(cuid())
   name      String
+  description String? //@db.Text
+  image     String? //@db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  users     PlaylistUser[]
+  movies    Movie[]
+  series   Series[]
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdBy   User   @relation("createdBy", fields: [createdById], references: [id])
   createdById String
 
   @@index([name])
 }
 
-model User {
-  id            String    @id
-  name          String //@db.Text
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String? //@db.Text
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  posts         Post[]
+model Movie {
+  id          String   @id @default(cuid())
+  title       String
+  description String? //@db.Text
+  image       String? //@db.Text
+  releaseDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Status @default(PENDING)
+  tags        String[] //@db.Text
+  tmdbScore   Float?
+  addedById   String
+  addedBy     User     @relation("addedBy", fields: [addedById], references: [id])
 
-  @@unique([email])
-  @@map("user")
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  createdBy   User   @relation("createdBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@index([title])
+}
+
+model Series {
+  id          String   @id @default(cuid())
+  title       String
+  description String? //@db.Text
+  image       String? //@db.Text
+  releaseDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  status      Status @default(PENDING)
+  tags        String[] //@db.Text
+  tmdbScore   Float?
+  addedById   String
+  addedBy     User     @relation("addedBy", fields: [addedById], references: [id])
+
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  createdBy   User   @relation("createdBy", fields: [createdById], references: [id])
+  createdById String
+
+  @@index([title])
+}
+
+model PlaylistUser {
+  id          String   @id @default(cuid())
+  playlistId  String
+  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([playlistId, userId])
+}
+
+enum Status {
+  PENDING
+  WATCHING
+  WATCHED
+  DROPPED
 }
 
 model Session {

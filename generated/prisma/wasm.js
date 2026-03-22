@@ -175,7 +175,7 @@ const config = {
     },
     output: {
       value:
-        "C:\\Users\\carol\\Documents\\GitHub\\movielist\\generated\\prisma",
+        "C:\\Users\\carol\\Documents\\GitHub\\watchlist\\generated\\prisma",
       fromEnvVar: null,
     },
     config: {
@@ -190,7 +190,7 @@ const config = {
     ],
     previewFeatures: [],
     sourceFilePath:
-      "C:\\Users\\carol\\Documents\\GitHub\\movielist\\prisma\\schema.prisma",
+      "C:\\Users\\carol\\Documents\\GitHub\\watchlist\\prisma\\schema.prisma",
     isCustomOutput: true,
   },
   relativeEnvPaths: {

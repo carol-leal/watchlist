@@ -1,2 +1,2 @@
-# movielist
+# watchlist
 
