@@ -16,32 +16,36 @@ datasource db {
 }
 
 model User {
-  id              String    @id
-  name            String //@db.Text
-  email           String
-  emailVerified   Boolean   @default(false)
-  image           String? //@db.Text
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt
-  sessions        Session[]
-  accounts        Account[]
-  playlistUsers   PlaylistUser[]
-  createdPlaylists Playlist[] @relation("createdBy")
+  id               String         @id
+  name             String //@db.Text
+  email            String
+  emailVerified    Boolean        @default(false)
+  image            String? //@db.Text
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  sessions         Session[]
+  accounts         Account[]
+  playlistUsers    PlaylistUser[]
+  createdPlaylists Playlist[]     @relation("createdBy")
+  addedMovies      Movie[]        @relation("addedBy")
+  createdMovies    Movie[]        @relation("createdBy")
+  addedSeries      Series[]       @relation("addedBy")
+  createdSeries    Series[]       @relation("createdBy")
 
   @@unique([email])
   @@map("user")
 }
 
 model Playlist {
-  id        String   @id @default(cuid())
-  name      String
+  id          String         @id @default(cuid())
+  name        String
   description String? //@db.Text
-  image     String? //@db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  users     PlaylistUser[]
-  movies    Movie[]
-  series   Series[]
+  image       String? //@db.Text
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  users       PlaylistUser[]
+  movies      Movie[]
+  series      Series[]
 
   createdBy   User   @relation("createdBy", fields: [createdById], references: [id])
   createdById String
@@ -50,18 +54,18 @@ model Playlist {
 }
 
 model Movie {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String? //@db.Text
   image       String? //@db.Text
   releaseDate DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  status      Status @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      Status    @default(PENDING)
   tags        String[] //@db.Text
   tmdbScore   Float?
   addedById   String
-  addedBy     User     @relation("addedBy", fields: [addedById], references: [id])
+  addedBy     User      @relation("addedBy", fields: [addedById], references: [id])
 
   playlistId String
   playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
@@ -73,18 +77,18 @@ model Movie {
 }
 
 model Series {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String? //@db.Text
   image       String? //@db.Text
   releaseDate DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  status      Status @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      Status    @default(PENDING)
   tags        String[] //@db.Text
   tmdbScore   Float?
   addedById   String
-  addedBy     User     @relation("addedBy", fields: [addedById], references: [id])
+  addedBy     User      @relation("addedBy", fields: [addedById], references: [id])
 
   playlistId String
   playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
@@ -96,12 +100,12 @@ model Series {
 }
 
 model PlaylistUser {
-  id          String   @id @default(cuid())
-  playlistId  String
-  playlist    Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
 
   @@unique([playlistId, userId])
 }

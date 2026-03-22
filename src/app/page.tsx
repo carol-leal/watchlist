@@ -64,7 +64,7 @@ export default async function Home() {
                       "use server";
                       const res = await auth.api.signInSocial({
                         body: {
-                          provider: "github",
+                          provider: "discord",
                           callbackURL: "/",
                         },
                       });
@@ -73,7 +73,7 @@ export default async function Home() {
                       redirect(res.url);
                     }}
                   >
-                    Sign in with Github
+                    Sign in with Discord
                   </button>
                 </form>
               ) : (

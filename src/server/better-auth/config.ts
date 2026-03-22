@@ -13,8 +13,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     discord: {
-      clientId: env.BETTER_AUTH_DISCORD_CLIENT_ID as string,
-      clientSecret: env.BETTER_AUTH_DISCORD_CLIENT_SECRET as string,
+      clientId: env.BETTER_AUTH_DISCORD_CLIENT_ID,
+      clientSecret: env.BETTER_AUTH_DISCORD_CLIENT_SECRET,
     },
   },
 });
