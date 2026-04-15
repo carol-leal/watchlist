@@ -5,6 +5,7 @@ import { Geist } from "next/font/google";
 import { getSession } from "~/server/better-auth/server";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import SidebarWrapper from "./_components/sidebar/sidebar-wrapper";
 
 export const metadata: Metadata = {
   title: "WatchLists",
@@ -23,12 +24,18 @@ export default async function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geist.className} bg-background text-foreground`}>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
-        {!session && (
-          <main className="flex flex-col items-center justify-center text-white">
-            {children}
-          </main>
-        )}
+        <TRPCReactProvider>
+          {session ? (
+            <div className="flex h-screen overflow-hidden">
+              <SidebarWrapper />
+              <main className="flex-1 overflow-y-auto">{children}</main>
+            </div>
+          ) : (
+            <main className="flex min-h-screen flex-col items-center justify-center">
+              {children}
+            </main>
+          )}
+        </TRPCReactProvider>
       </body>
     </html>
   );
