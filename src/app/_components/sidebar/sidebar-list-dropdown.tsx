@@ -4,9 +4,10 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { CaretDownIcon, CaretUpIcon, FolderIcon } from "@phosphor-icons/react";
+import { type UserPlaylists } from "~/types";
 
 interface SidebarListDropdownProps {
-  lists: { id: string; name: string }[];
+  lists: UserPlaylists;
 }
 
 export default function SidebarListDropdown({

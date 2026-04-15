@@ -8,6 +8,7 @@ import Logo from "../logo";
 import SidebarItem from "./sidebar-item";
 import SidebarListDropdown from "./sidebar-list-dropdown";
 import SidebarAccount from "./sidebar-account";
+import { type UserPlaylists } from "~/types";
 
 interface SidebarProps {
   user: {
@@ -15,7 +16,7 @@ interface SidebarProps {
     email: string;
     image?: string | null;
   };
-  lists: { id: string; name: string }[];
+  lists: UserPlaylists;
 }
 
 function SidebarContent({

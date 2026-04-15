@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import { getSession } from "~/server/better-auth/server";
 
+import { Toast } from "@heroui/react";
 import { TRPCReactProvider } from "~/trpc/react";
 import SidebarWrapper from "./_components/sidebar/sidebar-wrapper";
 
@@ -35,6 +36,7 @@ export default async function RootLayout({
               {children}
             </main>
           )}
+          <Toast.Provider />
         </TRPCReactProvider>
       </body>
     </html>
