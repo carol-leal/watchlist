@@ -1,6 +1,16 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export const playlistRouter = createTRPCRouter({
   getUserPlaylists: protectedProcedure.query(async ({ ctx }) => {
     return ctx.db.playlist.findMany({
@@ -9,10 +19,40 @@ export const playlistRouter = createTRPCRouter({
           some: { userId: ctx.session.user.id },
         },
       },
-      select: { id: true, name: true },
+      select: { id: true, name: true, slug: true, description: true },
       orderBy: { name: "asc" },
     });
   }),
+
+  create: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(100),
+        description: z.string().max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const baseSlug = slugify(input.name) || "list";
+      let slug = baseSlug;
+      let suffix = 0;
+
+      while (await ctx.db.playlist.findUnique({ where: { slug } })) {
+        suffix++;
+        slug = `${baseSlug}-${suffix}`;
+      }
+
+      return ctx.db.playlist.create({
+        data: {
+          name: input.name,
+          slug,
+          description: input.description ?? null,
+          createdById: ctx.session.user.id,
+          users: {
+            create: { userId: ctx.session.user.id },
+          },
+        },
+      });
+    }),
 
   addMovie: protectedProcedure
     .input(

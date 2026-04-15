@@ -8,6 +8,7 @@ import Logo from "../logo";
 import SidebarItem from "./sidebar-item";
 import SidebarListDropdown from "./sidebar-list-dropdown";
 import SidebarAccount from "./sidebar-account";
+import NewListModal from "./new-list-modal";
 import { type UserPlaylists } from "~/types";
 
 interface SidebarProps {
@@ -23,7 +24,8 @@ function SidebarContent({
   user,
   lists,
   onNavigate,
-}: SidebarProps & { onNavigate?: () => void }) {
+  onNewList,
+}: SidebarProps & { onNavigate?: () => void; onNewList: () => void }) {
   return (
     <div className="flex h-full flex-col">
       {/* Logo */}
@@ -51,12 +53,18 @@ function SidebarContent({
 
       {/* New List */}
       <div className="px-3 py-3">
-        <Link href="/lists/new" onClick={onNavigate}>
-          <Button variant="primary" fullWidth size="sm">
-            <PlusIcon size={16} />
-            New List
-          </Button>
-        </Link>
+        <Button
+          variant="primary"
+          fullWidth
+          size="sm"
+          onPress={() => {
+            onNewList();
+            onNavigate?.();
+          }}
+        >
+          <PlusIcon size={16} />
+          New List
+        </Button>
       </div>
 
       <Separator />
@@ -71,6 +79,7 @@ function SidebarContent({
 
 export default function Sidebar({ user, lists }: SidebarProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [newListOpen, setNewListOpen] = useState(false);
 
   // Close mobile drawer when resizing to desktop breakpoint
   useEffect(() => {
@@ -106,6 +115,7 @@ export default function Sidebar({ user, lists }: SidebarProps) {
                 user={user}
                 lists={lists}
                 onNavigate={() => setDrawerOpen(false)}
+                onNewList={() => setNewListOpen(true)}
               />
             </Drawer.Body>
           </Drawer.Content>
@@ -114,8 +124,18 @@ export default function Sidebar({ user, lists }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <aside className="bg-surface border-separator hidden h-screen w-64 shrink-0 border-r md:flex md:flex-col">
-        <SidebarContent user={user} lists={lists} />
+        <SidebarContent
+          user={user}
+          lists={lists}
+          onNewList={() => setNewListOpen(true)}
+        />
       </aside>
+
+      {/* New list modal */}
+      <NewListModal
+        isOpen={newListOpen}
+        onClose={() => setNewListOpen(false)}
+      />
     </>
   );
 }

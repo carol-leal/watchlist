@@ -9,6 +9,7 @@ export type TmdbGenreMap = RouterOutputs["tmdb"]["getGenres"];
 // Playlists
 export type Playlist = RouterOutputs["playlist"]["getUserPlaylists"][number];
 export type UserPlaylists = RouterOutputs["playlist"]["getUserPlaylists"];
+export type CreatePlaylistInput = RouterInputs["playlist"]["create"];
 export type AddMovieInput = RouterInputs["playlist"]["addMovie"];
 export type AddSeriesInput = RouterInputs["playlist"]["addSeries"];
 

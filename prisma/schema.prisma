@@ -39,8 +39,8 @@ model User {
 model Playlist {
   id          String         @id @default(cuid())
   name        String
+  slug        String         @unique
   description String? //@db.Text
-  image       String? //@db.Text
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   users       PlaylistUser[]
