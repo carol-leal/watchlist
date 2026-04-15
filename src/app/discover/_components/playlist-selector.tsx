@@ -24,13 +24,19 @@ export default function PlaylistSelector({
       className="w-60"
     >
       <Label>Add to list</Label>
-      <ListBox>
-        {playlists.map((p) => (
-          <ListBox.Item key={p.id} id={p.id} textValue={p.name}>
-            {p.name}
-          </ListBox.Item>
-        ))}
-      </ListBox>
+      <Select.Trigger>
+        <Select.Value />
+        <Select.Indicator />
+      </Select.Trigger>
+      <Select.Popover>
+        <ListBox>
+          {playlists.map((p) => (
+            <ListBox.Item key={p.id} id={p.id} textValue={p.name}>
+              {p.name}
+            </ListBox.Item>
+          ))}
+        </ListBox>
+      </Select.Popover>
     </Select>
   );
 }

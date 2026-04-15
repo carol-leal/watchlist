@@ -7,7 +7,6 @@ import { type TmdbSearchResult } from "~/types";
 import SearchBar from "./search-bar";
 import ResultCard from "./result-card";
 import DetailModal from "./detail-modal";
-import PlaylistSelector from "./playlist-selector";
 
 export default function DiscoverContent() {
   const [query, setQuery] = useState("");
@@ -15,7 +14,6 @@ export default function DiscoverContent() {
     null,
   );
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState("");
 
   const {
     data: searchData,
@@ -29,8 +27,6 @@ export default function DiscoverContent() {
   const { data: genreMap } = api.tmdb.getGenres.useQuery(undefined, {
     staleTime: Infinity,
   });
-
-  const { data: playlists } = api.playlist.getUserPlaylists.useQuery();
 
   const handleSearch = (q: string) => {
     setQuery(q);
@@ -51,16 +47,9 @@ export default function DiscoverContent() {
         </p>
       </div>
 
-      {/* Search + Playlist selector */}
+      {/* Search */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <SearchBar onSearch={handleSearch} isLoading={isSearching} />
-        {playlists && playlists.length > 0 && (
-          <PlaylistSelector
-            playlists={playlists}
-            selectedPlaylistId={selectedPlaylistId}
-            onSelectionChange={setSelectedPlaylistId}
-          />
-        )}
       </div>
 
       {/* Loading */}
@@ -117,7 +106,6 @@ export default function DiscoverContent() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         genreMap={genreMap ?? {}}
-        selectedPlaylistId={selectedPlaylistId}
       />
     </div>
   );
