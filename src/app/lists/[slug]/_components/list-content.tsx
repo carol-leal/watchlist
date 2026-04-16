@@ -32,12 +32,16 @@ export default function ListContent({ slug }: ListContentProps) {
 
   const invalidate = () => {
     void utils.playlist.getBySlug.invalidate({ slug });
+    void utils.dashboard.getStats.invalidate();
+    void utils.dashboard.getActivity.invalidate();
   };
 
   const deletePlaylist = api.playlist.deletePlaylist.useMutation({
     onSuccess: () => {
       toast.success("List deleted");
       void utils.playlist.getUserPlaylists.invalidate();
+      void utils.dashboard.getStats.invalidate();
+      void utils.dashboard.getActivity.invalidate();
       router.push("/");
       router.refresh();
     },

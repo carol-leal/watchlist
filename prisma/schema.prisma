@@ -21,6 +21,7 @@ model User {
   email            String
   emailVerified    Boolean         @default(false)
   image            String? //@db.Text
+  discordUsername  String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @default(now()) @updatedAt
   sessions         Session[]
@@ -31,7 +32,9 @@ model User {
   createdMovies    Movie[]         @relation("createdBy")
   addedSeries      Series[]        @relation("addedBy")
   createdSeries    Series[]        @relation("createdBy")
-  sentInvitations  PlaylistInvitation[]
+  sentInvitations     PlaylistInvitation[] @relation("sentInvitations")
+  receivedInvitations PlaylistInvitation[] @relation("receivedInvitations")
+  activityLogs     ActivityLog[]
   preferences      UserPreferences?
 
   @@unique([email])
@@ -60,6 +63,7 @@ model Playlist {
   invitations PlaylistInvitation[]
   movies      Movie[]
   series      Series[]
+  activityLogs ActivityLog[]
 
   createdBy   User   @relation("createdBy", fields: [createdById], references: [id])
   createdById String
@@ -124,14 +128,23 @@ model PlaylistUser {
   @@unique([playlistId, userId])
 }
 
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
 model PlaylistInvitation {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   playlistId      String
-  playlist        Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  playlist        Playlist         @relation(fields: [playlistId], references: [id], onDelete: Cascade)
   discordUsername String
   invitedById     String
-  invitedBy       User     @relation(fields: [invitedById], references: [id], onDelete: Cascade)
-  createdAt       DateTime @default(now())
+  invitedBy       User             @relation("sentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedUserId   String?
+  invitedUser     User?            @relation("receivedInvitations", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  status          InvitationStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
 
   @@unique([playlistId, discordUsername])
   @@map("playlist_invitation")
@@ -142,6 +155,22 @@ enum Status {
   WATCHING
   WATCHED
   DROPPED
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  type       String   // MOVIE_ADDED, STATUS_CHANGED, MOVIE_DELETED, MEMBER_JOINED, MEMBER_REMOVED, SERIES_ADDED
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movieTitle String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([playlistId])
+  @@index([createdAt])
+  @@map("activity_log")
 }
 
 model Session {

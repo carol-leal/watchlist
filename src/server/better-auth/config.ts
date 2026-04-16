@@ -16,6 +16,19 @@ export const auth = betterAuth({
     discord: {
       clientId: env.BETTER_AUTH_DISCORD_CLIENT_ID,
       clientSecret: env.BETTER_AUTH_DISCORD_CLIENT_SECRET,
+      mapProfileToUser: (profile) => {
+        return {
+          discordUsername: (profile.username as string) ?? null,
+        };
+      },
+    },
+  },
+  user: {
+    additionalFields: {
+      discordUsername: {
+        type: "string",
+        required: false,
+      },
     },
   },
   plugins: [nextCookies()],

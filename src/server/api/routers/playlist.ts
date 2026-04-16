@@ -63,18 +63,45 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.movie.update({
+      const movie = await ctx.db.movie.findUniqueOrThrow({
+        where: { id: input.movieId },
+        select: { title: true, status: true, playlistId: true },
+      });
+      const updated = await ctx.db.movie.update({
         where: { id: input.movieId },
         data: { status: input.status },
       });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "STATUS_CHANGED",
+          playlistId: movie.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: movie.title,
+          metadata: { oldStatus: movie.status, newStatus: input.status },
+        },
+      });
+      return updated;
     }),
 
   deleteMovie: protectedProcedure
     .input(z.object({ movieId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.movie.delete({
+      const movie = await ctx.db.movie.findUniqueOrThrow({
+        where: { id: input.movieId },
+        select: { title: true, playlistId: true },
+      });
+      const deleted = await ctx.db.movie.delete({
         where: { id: input.movieId },
       });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "MOVIE_DELETED",
+          playlistId: movie.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: movie.title,
+        },
+      });
+      return deleted;
     }),
 
   create: protectedProcedure
@@ -139,7 +166,7 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.movie.create({
+      const movie = await ctx.db.movie.create({
         data: {
           title: input.title,
           description: input.description ?? null,
@@ -153,6 +180,16 @@ export const playlistRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
         },
       });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "MOVIE_ADDED",
+          playlistId: input.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: input.title,
+          metadata: { status: input.status },
+        },
+      });
+      return movie;
     }),
 
   addSeries: protectedProcedure
@@ -169,7 +206,7 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      return ctx.db.series.create({
+      const series = await ctx.db.series.create({
         data: {
           title: input.title,
           description: input.description ?? null,
@@ -183,5 +220,15 @@ export const playlistRouter = createTRPCRouter({
           createdById: ctx.session.user.id,
         },
       });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "SERIES_ADDED",
+          playlistId: input.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: input.title,
+          metadata: { status: input.status },
+        },
+      });
+      return series;
     }),
 });

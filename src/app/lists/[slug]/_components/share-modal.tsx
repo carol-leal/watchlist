@@ -38,11 +38,7 @@ export default function ShareModal({
 
   const invite = api.share.invite.useMutation({
     onSuccess: (result) => {
-      if (result.added) {
-        toast.success(`${result.username} added to the list!`);
-      } else {
-        toast.success(`Invitation sent to ${result.username}`);
-      }
+      toast.success(`Invitation sent to ${result.username}`);
       setUsername("");
       void utils.share.getPlaylistMembers.invalidate({ playlistId });
     },

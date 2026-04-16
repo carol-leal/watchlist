@@ -15,6 +15,7 @@ export const shareRouter = createTRPCRouter({
             },
           },
           invitations: {
+            where: { status: "PENDING" },
             include: {
               invitedBy: { select: { id: true, name: true } },
             },
@@ -64,10 +65,21 @@ export const shareRouter = createTRPCRouter({
       });
       if (!membership) throw new Error("You are not a member of this list");
 
-      // Look for a user with this name (case-insensitive)
+      // Check if invitation already exists
+      const existingInvite = await ctx.db.playlistInvitation.findUnique({
+        where: {
+          playlistId_discordUsername: {
+            playlistId: input.playlistId,
+            discordUsername: username,
+          },
+        },
+      });
+      if (existingInvite) throw new Error("Invitation already exists for this user");
+
+      // Look for a user with this discord username
       const targetUser = await ctx.db.user.findFirst({
         where: {
-          name: { equals: username, mode: "insensitive" },
+          discordUsername: { equals: username, mode: "insensitive" },
         },
       });
 
@@ -82,46 +94,20 @@ export const shareRouter = createTRPCRouter({
           },
         });
         if (existing) throw new Error("User is already a member of this list");
-
-        // Add directly
-        await ctx.db.playlistUser.create({
-          data: {
-            playlistId: input.playlistId,
-            userId: targetUser.id,
-          },
-        });
-
-        // Remove any pending invitation for this username
-        await ctx.db.playlistInvitation.deleteMany({
-          where: {
-            playlistId: input.playlistId,
-            discordUsername: { equals: username, mode: "insensitive" },
-          },
-        });
-
-        return { added: true, username };
       }
 
-      // User not found — create pending invitation
-      const existingInvite = await ctx.db.playlistInvitation.findUnique({
-        where: {
-          playlistId_discordUsername: {
-            playlistId: input.playlistId,
-            discordUsername: username,
-          },
-        },
-      });
-      if (existingInvite) throw new Error("Invitation already pending");
-
+      // Create pending invitation
       await ctx.db.playlistInvitation.create({
         data: {
           playlistId: input.playlistId,
           discordUsername: username,
           invitedById: ctx.session.user.id,
+          invitedUserId: targetUser?.id ?? null,
+          status: "PENDING",
         },
       });
 
-      return { added: false, username };
+      return { invited: true, username };
     }),
 
   removeMember: protectedProcedure
@@ -144,7 +130,12 @@ export const shareRouter = createTRPCRouter({
         throw new Error("Cannot remove yourself");
       }
 
-      return ctx.db.playlistUser.delete({
+      const member = await ctx.db.user.findUniqueOrThrow({
+        where: { id: input.userId },
+        select: { name: true },
+      });
+
+      const result = await ctx.db.playlistUser.delete({
         where: {
           playlistId_userId: {
             playlistId: input.playlistId,
@@ -152,6 +143,17 @@ export const shareRouter = createTRPCRouter({
           },
         },
       });
+
+      await ctx.db.activityLog.create({
+        data: {
+          type: "MEMBER_REMOVED",
+          playlistId: input.playlistId,
+          userId: ctx.session.user.id,
+          metadata: { memberName: member.name },
+        },
+      });
+
+      return result;
     }),
 
   cancelInvitation: protectedProcedure

@@ -76,6 +76,8 @@ export default function DetailModal({
     onSuccess: () => {
       toast.success("Movie added to list!");
       void utils.playlist.getUserPlaylists.invalidate();
+      void utils.dashboard.getStats.invalidate();
+      void utils.dashboard.getActivity.invalidate();
       onClose();
     },
     onError: (err: { message: string }) => {
@@ -87,6 +89,8 @@ export default function DetailModal({
     onSuccess: () => {
       toast.success("Series added to list!");
       void utils.playlist.getUserPlaylists.invalidate();
+      void utils.dashboard.getStats.invalidate();
+      void utils.dashboard.getActivity.invalidate();
       onClose();
     },
     onError: (err: { message: string }) => {

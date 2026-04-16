@@ -22,6 +22,8 @@ export default function NewListModal({ isOpen, onClose }: NewListModalProps) {
     onSuccess: () => {
       toast.success("List created!");
       void utils.playlist.getUserPlaylists.invalidate();
+      void utils.dashboard.getStats.invalidate();
+      void utils.dashboard.getActivity.invalidate();
       router.refresh();
       resetAndClose();
     },
