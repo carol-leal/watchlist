@@ -24,6 +24,59 @@ export const playlistRouter = createTRPCRouter({
     });
   }),
 
+  getBySlug: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const playlist = await ctx.db.playlist.findUnique({
+        where: { slug: input.slug },
+        include: {
+          movies: {
+            include: {
+              addedBy: { select: { id: true, name: true, image: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
+          users: {
+            include: {
+              user: { select: { id: true, name: true, image: true } },
+            },
+          },
+        },
+      });
+
+      if (!playlist) return null;
+
+      // Verify the user is a member
+      const isMember = playlist.users.some(
+        (u) => u.userId === ctx.session.user.id,
+      );
+      if (!isMember) return null;
+
+      return playlist;
+    }),
+
+  updateMovieStatus: protectedProcedure
+    .input(
+      z.object({
+        movieId: z.string(),
+        status: z.enum(["PENDING", "WATCHING", "WATCHED", "DROPPED"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.movie.update({
+        where: { id: input.movieId },
+        data: { status: input.status },
+      });
+    }),
+
+  deleteMovie: protectedProcedure
+    .input(z.object({ movieId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.movie.delete({
+        where: { id: input.movieId },
+      });
+    }),
+
   create: protectedProcedure
     .input(
       z.object({

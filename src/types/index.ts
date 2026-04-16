@@ -13,4 +13,10 @@ export type CreatePlaylistInput = RouterInputs["playlist"]["create"];
 export type AddMovieInput = RouterInputs["playlist"]["addMovie"];
 export type AddSeriesInput = RouterInputs["playlist"]["addSeries"];
 
+// List detail
+export type PlaylistDetail = NonNullable<
+  RouterOutputs["playlist"]["getBySlug"]
+>;
+export type PlaylistMovie = PlaylistDetail["movies"][number];
+
 export type { RouterOutputs, RouterInputs };
