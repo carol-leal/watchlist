@@ -31,6 +31,7 @@ model User {
   createdMovies    Movie[]         @relation("createdBy")
   addedSeries      Series[]        @relation("addedBy")
   createdSeries    Series[]        @relation("createdBy")
+  sentInvitations  PlaylistInvitation[]
   preferences      UserPreferences?
 
   @@unique([email])
@@ -56,6 +57,7 @@ model Playlist {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   users       PlaylistUser[]
+  invitations PlaylistInvitation[]
   movies      Movie[]
   series      Series[]
 
@@ -120,6 +122,19 @@ model PlaylistUser {
   createdAt  DateTime @default(now())
 
   @@unique([playlistId, userId])
+}
+
+model PlaylistInvitation {
+  id              String   @id @default(cuid())
+  playlistId      String
+  playlist        Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  discordUsername String
+  invitedById     String
+  invitedBy       User     @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+
+  @@unique([playlistId, discordUsername])
+  @@map("playlist_invitation")
 }
 
 enum Status {

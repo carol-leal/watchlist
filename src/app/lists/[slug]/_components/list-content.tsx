@@ -9,6 +9,7 @@ import { useUserPreferences } from "~/app/_components/user-preferences";
 import ListStats from "./list-stats";
 import MovieCard from "./movie-card";
 import ListSearchBar from "./list-search-bar";
+import ShareModal from "./share-modal";
 
 interface ListContentProps {
   slug: string;
@@ -18,6 +19,7 @@ export default function ListContent({ slug }: ListContentProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { preferences } = useUserPreferences();
   const router = useRouter();
 
@@ -98,7 +100,12 @@ export default function ListContent({ slug }: ListContentProps) {
         <div className="flex shrink-0 gap-2">
           <Tooltip>
             <Tooltip.Trigger>
-              <Button variant="outline" isIconOnly size="sm">
+              <Button
+                variant="outline"
+                isIconOnly
+                size="sm"
+                onPress={() => setShareOpen(true)}
+              >
                 <ShareNetworkIcon size={18} />
               </Button>
             </Tooltip.Trigger>
@@ -182,6 +189,14 @@ export default function ListContent({ slug }: ListContentProps) {
           ))}
         </div>
       )}
+
+      {/* Share modal */}
+      <ShareModal
+        playlistId={playlist.id}
+        playlistName={playlist.name}
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 }

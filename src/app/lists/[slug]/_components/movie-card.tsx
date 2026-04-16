@@ -252,7 +252,7 @@ export default function MovieCard({
                       key={status}
                       size="sm"
                       variant="outline"
-                      className={`w-full gap-0.5 px-1 text-[10px] ${isActive ? config.activeClass : config.inactiveClass}`}
+                      className={`w-full gap-2 px-1 text-[10px] ${isActive ? config.activeClass : config.inactiveClass}`}
                       isDisabled={isActive || updateStatus.isPending}
                       onPress={() =>
                         updateStatus.mutate({ movieId: movie.id, status })

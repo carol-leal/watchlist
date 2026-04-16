@@ -1,6 +1,7 @@
 import { playlistRouter } from "~/server/api/routers/playlist";
 import { postRouter } from "~/server/api/routers/post";
 import { preferencesRouter } from "~/server/api/routers/preferences";
+import { shareRouter } from "~/server/api/routers/share";
 import { tmdbRouter } from "~/server/api/routers/tmdb";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   playlist: playlistRouter,
   preferences: preferencesRouter,
+  share: shareRouter,
   tmdb: tmdbRouter,
 });
 
