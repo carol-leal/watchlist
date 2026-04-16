@@ -107,6 +107,24 @@ export const playlistRouter = createTRPCRouter({
       });
     }),
 
+  deletePlaylist: protectedProcedure
+    .input(z.object({ playlistId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      // Verify user is the creator
+      const playlist = await ctx.db.playlist.findUnique({
+        where: { id: input.playlistId },
+        select: { createdById: true },
+      });
+
+      if (!playlist || playlist.createdById !== ctx.session.user.id) {
+        throw new Error("Not authorized to delete this list");
+      }
+
+      return ctx.db.playlist.delete({
+        where: { id: input.playlistId },
+      });
+    }),
+
   addMovie: protectedProcedure
     .input(
       z.object({

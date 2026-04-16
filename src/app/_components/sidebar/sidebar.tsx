@@ -83,7 +83,7 @@ export default function Sidebar({ user, lists }: SidebarProps) {
 
   // Close mobile drawer when resizing to desktop breakpoint
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const handler = () => {
       if (mq.matches) setDrawerOpen(false);
     };
@@ -94,7 +94,7 @@ export default function Sidebar({ user, lists }: SidebarProps) {
   return (
     <>
       {/* Mobile burger button */}
-      <div className="fixed top-3 left-3 z-50 md:hidden">
+      <div className="fixed top-3 left-3 z-50 lg:hidden">
         <Button
           isIconOnly
           variant="ghost"
@@ -109,7 +109,7 @@ export default function Sidebar({ user, lists }: SidebarProps) {
       {/* Mobile drawer */}
       <Drawer isOpen={drawerOpen} onOpenChange={setDrawerOpen}>
         <Drawer.Backdrop variant="opaque">
-          <Drawer.Content placement="left" className="w-64">
+          <Drawer.Content placement="left" className="w-64 bg-surface">
             <Drawer.Body className="p-0">
               <SidebarContent
                 user={user}
@@ -123,7 +123,7 @@ export default function Sidebar({ user, lists }: SidebarProps) {
       </Drawer>
 
       {/* Desktop sidebar */}
-      <aside className="bg-surface border-separator hidden h-screen w-64 shrink-0 border-r md:flex md:flex-col">
+      <aside className="bg-surface border-separator hidden h-screen w-64 shrink-0 border-r lg:flex lg:flex-col">
         <SidebarContent
           user={user}
           lists={lists}

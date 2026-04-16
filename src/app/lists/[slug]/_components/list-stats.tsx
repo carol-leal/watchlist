@@ -6,6 +6,7 @@ import {
   ClockIcon,
   PlayIcon,
   CheckIcon,
+  XIcon,
   ChartBarIcon,
 } from "@phosphor-icons/react";
 import { Label, ProgressBar } from "@heroui/react";
@@ -23,17 +24,18 @@ export default function ListStats({ movies }: ListStatsProps) {
     const pending = movies.filter((m) => m.status === "PENDING").length;
     const watching = movies.filter((m) => m.status === "WATCHING").length;
     const watched = movies.filter((m) => m.status === "WATCHED").length;
+    const dropped = movies.filter((m) => m.status === "DROPPED").length;
 
     const totalHours = Math.round((watched * AVERAGE_MOVIE_MINUTES) / 60);
     const progress = total > 0 ? Math.round((watched / total) * 100) : 0;
 
-    return { total, pending, watching, watched, totalHours, progress };
+    return { total, pending, watching, watched, dropped, totalHours, progress };
   }, [movies]);
 
   return (
     <div className="flex flex-col gap-4">
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           icon={<FilmSlateIcon size={20} />}
           label="Total Movies"
@@ -49,13 +51,18 @@ export default function ListStats({ movies }: ListStatsProps) {
           icon={<PlayIcon size={20} />}
           label="Watching"
           value={stats.watching}
-          color="text-primary"
+          color="text-accent"
         />
         <StatCard
           icon={<CheckIcon size={20} />}
           label="Watched"
           value={stats.watched}
           color="text-success"
+        />
+        <StatCard
+          icon={<XIcon size={20} />}
+          label="Dropped"
+          value={stats.dropped}
         />
         <StatCard
           icon={<ChartBarIcon size={20} />}
