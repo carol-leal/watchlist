@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useCallback, type ReactNode } from "react";
 import { api } from "~/trpc/react";
 
 export interface UserPreferences {
@@ -16,7 +11,7 @@ export interface UserPreferences {
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   showListStats: true,
-  statusSelectMode: "dropdown",
+  statusSelectMode: "buttons",
   defaultPlaylistId: null,
 };
 
@@ -28,9 +23,8 @@ interface UserPreferencesContextValue {
   ) => void;
 }
 
-const UserPreferencesContext = createContext<UserPreferencesContextValue | null>(
-  null,
-);
+const UserPreferencesContext =
+  createContext<UserPreferencesContextValue | null>(null);
 
 export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const utils = api.useUtils();

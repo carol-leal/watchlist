@@ -3,8 +3,13 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Spinner, Tooltip, toast } from "@heroui/react";
-import { PencilSimpleIcon, ShareNetworkIcon, TrashIcon } from "@phosphor-icons/react";
+import {
+  PencilSimpleIcon,
+  ShareNetworkIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
+import { type PlaylistItem, mergePlaylistItems } from "~/types";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 import ListStats from "./list-stats";
 import MovieCard from "./movie-card";
@@ -51,27 +56,27 @@ export default function ListContent({ slug }: ListContentProps) {
   });
 
   const filtered = useMemo(() => {
-    if (!playlist) return [];
-    let movies = playlist.movies;
+    if (!playlist) return [] as PlaylistItem[];
+    let items = mergePlaylistItems(playlist.movies, playlist.series);
 
     // Status filter
     if (statusFilter !== "ALL") {
-      movies = movies.filter((m) => m.status === statusFilter);
+      items = items.filter((m) => m.status === statusFilter);
     }
 
     // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
-      movies = movies.filter(
+      items = items.filter(
         (m) =>
           m.title.toLowerCase().includes(q) ??
           m.description?.toLowerCase().includes(q) ??
-          m.tags.some((t) => t.toLowerCase().includes(q)) ??
+          m.tags.some((t: string) => t.toLowerCase().includes(q)) ??
           m.addedBy.name.toLowerCase().includes(q),
       );
     }
 
-    return movies;
+    return items;
   }, [playlist, search, statusFilter]);
 
   if (isLoading) {
@@ -170,7 +175,9 @@ export default function ListContent({ slug }: ListContentProps) {
       </div>
 
       {/* Stats */}
-      {preferences.showListStats && <ListStats movies={playlist.movies} />}
+      {preferences.showListStats && (
+        <ListStats movies={[...playlist.movies, ...playlist.series]} />
+      )}
 
       {/* Search & filters */}
       <ListSearchBar
@@ -179,29 +186,30 @@ export default function ListContent({ slug }: ListContentProps) {
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         totalFiltered={filtered.length}
-        totalAll={playlist.movies.length}
+        totalAll={playlist.movies.length + playlist.series.length}
       />
 
       {/* Movie grid */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <p className="text-lg font-medium text-muted">
-            {playlist.movies.length === 0
+            {playlist.movies.length + playlist.series.length === 0
               ? "No movies yet"
               : "No movies match your filters"}
           </p>
           <p className="mt-1 text-sm text-muted/70">
-            {playlist.movies.length === 0
+            {playlist.movies.length + playlist.series.length === 0
               ? "Head to Discover to add movies to this list"
               : "Try adjusting your search or filters"}
           </p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {filtered.map((movie) => (
+          {filtered.map((item) => (
             <MovieCard
-              key={movie.id}
-              movie={movie}
+              key={item.id}
+              movie={item}
+              kind={item.kind}
               onDeleted={invalidate}
               onStatusChanged={invalidate}
             />

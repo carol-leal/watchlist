@@ -117,6 +117,7 @@ export default function DetailModal({
     for (const playlistId of selectedPlaylistIds) {
       const payload = {
         playlistId: String(playlistId),
+        tmdbId: item.id,
         title: item.title,
         description: item.overview,
         image: item.posterPath,

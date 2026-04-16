@@ -36,6 +36,12 @@ export const playlistRouter = createTRPCRouter({
             },
             orderBy: { createdAt: "desc" },
           },
+          series: {
+            include: {
+              addedBy: { select: { id: true, name: true, image: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
           users: {
             include: {
               user: { select: { id: true, name: true, image: true } },
@@ -99,6 +105,55 @@ export const playlistRouter = createTRPCRouter({
           playlistId: movie.playlistId,
           userId: ctx.session.user.id,
           movieTitle: movie.title,
+        },
+      });
+      return deleted;
+    }),
+
+  updateSeriesStatus: protectedProcedure
+    .input(
+      z.object({
+        seriesId: z.string(),
+        status: z.enum(["PENDING", "WATCHING", "WATCHED", "DROPPED"]),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const series = await ctx.db.series.findUniqueOrThrow({
+        where: { id: input.seriesId },
+        select: { title: true, status: true, playlistId: true },
+      });
+      const updated = await ctx.db.series.update({
+        where: { id: input.seriesId },
+        data: { status: input.status },
+      });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "STATUS_CHANGED",
+          playlistId: series.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: series.title,
+          metadata: { oldStatus: series.status, newStatus: input.status },
+        },
+      });
+      return updated;
+    }),
+
+  deleteSeries: protectedProcedure
+    .input(z.object({ seriesId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const series = await ctx.db.series.findUniqueOrThrow({
+        where: { id: input.seriesId },
+        select: { title: true, playlistId: true },
+      });
+      const deleted = await ctx.db.series.delete({
+        where: { id: input.seriesId },
+      });
+      await ctx.db.activityLog.create({
+        data: {
+          type: "SERIES_DELETED",
+          playlistId: series.playlistId,
+          userId: ctx.session.user.id,
+          movieTitle: series.title,
         },
       });
       return deleted;
@@ -183,6 +238,7 @@ export const playlistRouter = createTRPCRouter({
     .input(
       z.object({
         playlistId: z.string(),
+        tmdbId: z.number().optional(),
         title: z.string(),
         description: z.string().nullable().optional(),
         image: z.string().nullable().optional(),
@@ -193,9 +249,22 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.tmdbId) {
+        const existing = await ctx.db.movie.findFirst({
+          where: {
+            playlistId: input.playlistId,
+            tmdbId: input.tmdbId,
+          },
+        });
+        if (existing) {
+          throw new Error("This movie is already in this list");
+        }
+      }
+
       const movie = await ctx.db.movie.create({
         data: {
           title: input.title,
+          tmdbId: input.tmdbId ?? null,
           description: input.description ?? null,
           image: input.image ?? null,
           releaseDate: input.releaseDate ? new Date(input.releaseDate) : null,
@@ -223,6 +292,7 @@ export const playlistRouter = createTRPCRouter({
     .input(
       z.object({
         playlistId: z.string(),
+        tmdbId: z.number().optional(),
         title: z.string(),
         description: z.string().nullable().optional(),
         image: z.string().nullable().optional(),
@@ -233,9 +303,22 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.tmdbId) {
+        const existing = await ctx.db.series.findFirst({
+          where: {
+            playlistId: input.playlistId,
+            tmdbId: input.tmdbId,
+          },
+        });
+        if (existing) {
+          throw new Error("This series is already in this list");
+        }
+      }
+
       const series = await ctx.db.series.create({
         data: {
           title: input.title,
+          tmdbId: input.tmdbId ?? null,
           description: input.description ?? null,
           image: input.image ?? null,
           releaseDate: input.releaseDate ? new Date(input.releaseDate) : null,

@@ -9,7 +9,7 @@ import {
   XIcon,
   ChartBarIcon,
 } from "@phosphor-icons/react";
-import { Label, ProgressBar } from "@heroui/react";
+import { ProgressBar } from "@heroui/react";
 import { type PlaylistMovie } from "~/types";
 
 interface ListStatsProps {

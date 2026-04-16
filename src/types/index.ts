@@ -18,5 +18,20 @@ export type PlaylistDetail = NonNullable<
   RouterOutputs["playlist"]["getBySlug"]
 >;
 export type PlaylistMovie = PlaylistDetail["movies"][number];
+export type PlaylistSeries = PlaylistDetail["series"][number];
+export type PlaylistItem = PlaylistMovie & { kind: "movie" | "series" };
+
+// Helper to tag items with their kind
+export function mergePlaylistItems(
+  movies: PlaylistMovie[],
+  series: PlaylistSeries[],
+): PlaylistItem[] {
+  return [
+    ...movies.map((m) => ({ ...m, kind: "movie" as const })),
+    ...series.map((s) => ({ ...s, kind: "series" as const }) as PlaylistItem),
+  ].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
 
 export type { RouterOutputs, RouterInputs };

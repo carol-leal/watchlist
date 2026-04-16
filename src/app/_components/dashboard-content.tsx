@@ -97,8 +97,7 @@ function formatActivityMessage(
     case "MEMBER_JOINED":
       return (
         <>
-          <strong>{userName}</strong> added{" "}
-          <strong>{metadata?.memberName}</strong> to the list
+          <strong>{metadata?.memberName ?? userName}</strong> joined the list
         </>
       );
     case "MEMBER_REMOVED":
@@ -135,8 +134,7 @@ export default function DashboardContent() {
     api.dashboard.getStats.useQuery();
   const { data: activity, isLoading: activityLoading } =
     api.dashboard.getActivity.useQuery();
-  const { data: invitations } =
-    api.dashboard.getPendingInvitations.useQuery();
+  const { data: invitations } = api.dashboard.getPendingInvitations.useQuery();
 
   const acceptInvitation = api.dashboard.acceptInvitation.useMutation({
     onSuccess: () => {

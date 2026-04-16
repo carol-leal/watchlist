@@ -18,6 +18,7 @@ import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface MovieCardProps {
   movie: PlaylistMovie;
+  kind?: "movie" | "series";
   onDeleted: () => void;
   onStatusChanged: () => void;
 }
@@ -71,6 +72,7 @@ const STATUS_OPTIONS = [
 
 export default function MovieCard({
   movie,
+  kind = "movie",
   onDeleted,
   onStatusChanged,
 }: MovieCardProps) {
@@ -78,7 +80,15 @@ export default function MovieCard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { preferences } = useUserPreferences();
 
-  const updateStatus = api.playlist.updateMovieStatus.useMutation({
+  const updateMovieStatus = api.playlist.updateMovieStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Status updated!");
+      onStatusChanged();
+    },
+    onError: (err: { message: string }) => toast.danger(err.message),
+  });
+
+  const updateSeriesStatus = api.playlist.updateSeriesStatus.useMutation({
     onSuccess: () => {
       toast.success("Status updated!");
       onStatusChanged();
@@ -88,11 +98,41 @@ export default function MovieCard({
 
   const deleteMovie = api.playlist.deleteMovie.useMutation({
     onSuccess: () => {
-      toast.success("Movie removed from list");
+      toast.success("Removed from list");
       onDeleted();
     },
     onError: (err: { message: string }) => toast.danger(err.message),
   });
+
+  const deleteSeries = api.playlist.deleteSeries.useMutation({
+    onSuccess: () => {
+      toast.success("Removed from list");
+      onDeleted();
+    },
+    onError: (err: { message: string }) => toast.danger(err.message),
+  });
+
+  const isUpdating =
+    updateMovieStatus.isPending || updateSeriesStatus.isPending;
+  const isDeleting = deleteMovie.isPending || deleteSeries.isPending;
+
+  const handleStatusChange = (
+    status: "PENDING" | "WATCHING" | "WATCHED" | "DROPPED",
+  ) => {
+    if (kind === "series") {
+      updateSeriesStatus.mutate({ seriesId: movie.id, status });
+    } else {
+      updateMovieStatus.mutate({ movieId: movie.id, status });
+    }
+  };
+
+  const handleDelete = () => {
+    if (kind === "series") {
+      deleteSeries.mutate({ seriesId: movie.id });
+    } else {
+      deleteMovie.mutate({ movieId: movie.id });
+    }
+  };
 
   const currentStatus = STATUS_CONFIG[movie.status];
 
@@ -215,14 +255,9 @@ export default function MovieCard({
                 defaultSelectedKey={movie.status}
                 onSelectionChange={(key) => {
                   if (key && key !== movie.status) {
-                    updateStatus.mutate({
-                      movieId: movie.id,
-                      status: key as
-                        | "PENDING"
-                        | "WATCHING"
-                        | "WATCHED"
-                        | "DROPPED",
-                    });
+                    handleStatusChange(
+                      key as "PENDING" | "WATCHING" | "WATCHED" | "DROPPED",
+                    );
                   }
                 }}
                 className="w-full"
@@ -253,10 +288,8 @@ export default function MovieCard({
                       size="sm"
                       variant="outline"
                       className={`w-full gap-2 px-1 text-[10px] ${isActive ? config.activeClass : config.inactiveClass}`}
-                      isDisabled={isActive || updateStatus.isPending}
-                      onPress={() =>
-                        updateStatus.mutate({ movieId: movie.id, status })
-                      }
+                      isDisabled={isActive || isUpdating}
+                      onPress={() => handleStatusChange(status)}
                     >
                       <Icon size={12} />
                       {config.label}
@@ -273,8 +306,8 @@ export default function MovieCard({
                   size="sm"
                   variant="danger"
                   className="flex-1 text-[10px]"
-                  isPending={deleteMovie.isPending}
-                  onPress={() => deleteMovie.mutate({ movieId: movie.id })}
+                  isPending={isDeleting}
+                  onPress={handleDelete}
                 >
                   Confirm Delete
                 </Button>
@@ -295,7 +328,7 @@ export default function MovieCard({
                 onPress={() => setConfirmDelete(true)}
               >
                 <TrashIcon size={12} />
-                Delete Movie
+                Delete
               </Button>
             )}
           </div>
@@ -412,14 +445,13 @@ export default function MovieCard({
                       defaultSelectedKey={movie.status}
                       onSelectionChange={(key) => {
                         if (key && key !== movie.status) {
-                          updateStatus.mutate({
-                            movieId: movie.id,
-                            status: key as
+                          handleStatusChange(
+                            key as
                               | "PENDING"
                               | "WATCHING"
                               | "WATCHED"
                               | "DROPPED",
-                          });
+                          );
                         }
                       }}
                       className="w-full"
@@ -449,11 +481,9 @@ export default function MovieCard({
                             key={status}
                             size="sm"
                             variant="outline"
-                            className={`gap-1 ${isActive ? config.activeClass : config.inactiveClass}`}
-                            isDisabled={isActive || updateStatus.isPending}
-                            onPress={() =>
-                              updateStatus.mutate({ movieId: movie.id, status })
-                            }
+                            className={`w-full gap-2 px-1 text-[10px] ${isActive ? config.activeClass : config.inactiveClass}`}
+                            isDisabled={isActive || isUpdating}
+                            onPress={() => handleStatusChange(status)}
                           >
                             <Icon size={14} />
                             {config.label}
@@ -470,10 +500,8 @@ export default function MovieCard({
                         size="sm"
                         variant="danger"
                         className="flex-1"
-                        isPending={deleteMovie.isPending}
-                        onPress={() =>
-                          deleteMovie.mutate({ movieId: movie.id })
-                        }
+                        isPending={isDeleting}
+                        onPress={handleDelete}
                       >
                         Confirm Delete
                       </Button>
@@ -493,7 +521,7 @@ export default function MovieCard({
                       onPress={() => setConfirmDelete(true)}
                     >
                       <TrashIcon size={14} />
-                      Delete Movie
+                      Delete
                     </Button>
                   )}
                 </div>

@@ -7,12 +7,11 @@ import {
   Chip,
   Modal,
   Separator,
-  TextField,
   Label,
   Input,
   toast,
 } from "@heroui/react";
-import { TrashIcon, UserIcon, PaperPlaneTiltIcon } from "@phosphor-icons/react";
+import { TrashIcon, UserIcon } from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
 
 interface ShareModalProps {
@@ -88,7 +87,7 @@ export default function ShareModal({
                   <div className="flex flex-1 flex-col gap-1.5">
                     <Label className="text-sm">Discord username</Label>
                     <Input
-                      placeholder="e.g. roy#1234"
+                      placeholder="e.g. roy_1234"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       onKeyDown={(e) => {
