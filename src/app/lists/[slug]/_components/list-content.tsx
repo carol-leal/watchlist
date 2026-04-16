@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Spinner } from "@heroui/react";
 import { api } from "~/trpc/react";
+import { useUserPreferences } from "~/app/_components/user-preferences";
 import ListStats from "./list-stats";
 import MovieCard from "./movie-card";
 import ListSearchBar from "./list-search-bar";
@@ -14,6 +15,7 @@ interface ListContentProps {
 export default function ListContent({ slug }: ListContentProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const { preferences } = useUserPreferences();
 
   const utils = api.useUtils();
 
@@ -40,9 +42,9 @@ export default function ListContent({ slug }: ListContentProps) {
       const q = search.toLowerCase();
       movies = movies.filter(
         (m) =>
-          m.title.toLowerCase().includes(q) ||
-          m.description?.toLowerCase().includes(q) ||
-          m.tags.some((t) => t.toLowerCase().includes(q)) ||
+          m.title.toLowerCase().includes(q) ??
+          m.description?.toLowerCase().includes(q) ??
+          m.tags.some((t) => t.toLowerCase().includes(q)) ??
           m.addedBy.name.toLowerCase().includes(q),
       );
     }
@@ -80,7 +82,7 @@ export default function ListContent({ slug }: ListContentProps) {
       </div>
 
       {/* Stats */}
-      <ListStats movies={playlist.movies} />
+      {preferences.showListStats && <ListStats movies={playlist.movies} />}
 
       {/* Search & filters */}
       <ListSearchBar
@@ -107,7 +109,7 @@ export default function ListContent({ slug }: ListContentProps) {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {filtered.map((movie) => (
             <MovieCard
               key={movie.id}

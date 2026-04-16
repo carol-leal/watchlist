@@ -7,6 +7,7 @@ import { getSession } from "~/server/better-auth/server";
 import { Toast } from "@heroui/react";
 import { TRPCReactProvider } from "~/trpc/react";
 import SidebarWrapper from "./_components/sidebar/sidebar-wrapper";
+import { UserPreferencesProvider } from "./_components/user-preferences";
 
 export const metadata: Metadata = {
   title: "WatchLists",
@@ -27,10 +28,12 @@ export default async function RootLayout({
       <body className={`${geist.className} bg-background text-foreground`}>
         <TRPCReactProvider>
           {session ? (
+            <UserPreferencesProvider>
             <div className="flex h-screen overflow-hidden">
               <SidebarWrapper />
               <main className="flex-1 overflow-y-auto">{children}</main>
             </div>
+            </UserPreferencesProvider>
           ) : (
             <main className="flex min-h-screen flex-col items-center justify-center">
               {children}

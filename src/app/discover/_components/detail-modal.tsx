@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type Key } from "@heroui/react";
 import {
   Modal,
@@ -15,6 +15,7 @@ import { ClockIcon, PlayIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { type TmdbSearchResult, type TmdbGenreMap } from "~/types";
+import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface DetailModalProps {
   item: TmdbSearchResult | null;
@@ -23,32 +24,27 @@ interface DetailModalProps {
   genreMap: TmdbGenreMap;
 }
 
-const STATUS_BUTTONS = [
+const STATUS_OPTIONS = [
   {
-    status: "PENDING" as const,
-    label: "Add to pending",
-    icon: ClockIcon,
-    variant: "outline" as const,
-  },
-  {
-    status: "WATCHING" as const,
-    label: "Add to watching",
-    icon: PlayIcon,
-    variant: "primary" as const,
-  },
-  {
-    status: "WATCHED" as const,
-    label: "Add to watched",
+    key: "WATCHED",
+    label: "Set as Watched",
     icon: CheckIcon,
-    variant: "secondary" as const,
+    colorClass: "text-success",
   },
   {
-    status: "DROPPED" as const,
-    label: "Dropped",
-    icon: XIcon,
-    variant: "danger" as const,
+    key: "WATCHING",
+    label: "Set as Watching",
+    icon: PlayIcon,
+    colorClass: "text-accent",
   },
-];
+  {
+    key: "PENDING",
+    label: "Set as Pending",
+    icon: ClockIcon,
+    colorClass: "text-warning",
+  },
+  { key: "DROPPED", label: "Set as Dropped", icon: XIcon, colorClass: "" },
+] as const;
 
 export default function DetailModal({
   item,
@@ -56,9 +52,25 @@ export default function DetailModal({
   onClose,
   genreMap,
 }: DetailModalProps) {
-  const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Key[]>([]);
+  const { preferences } = useUserPreferences();
+  const [selectedPlaylistIds, setSelectedPlaylistIds] = useState<Key[]>(
+    preferences.defaultPlaylistId ? [preferences.defaultPlaylistId] : [],
+  );
+  const [selectedStatus, setSelectedStatus] = useState<
+    "PENDING" | "WATCHING" | "WATCHED" | "DROPPED"
+  >("WATCHED");
   const utils = api.useUtils();
   const { data: playlists } = api.playlist.getUserPlaylists.useQuery();
+
+  // Reset selections when modal opens with a new item
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedPlaylistIds(
+        preferences.defaultPlaylistId ? [preferences.defaultPlaylistId] : [],
+      );
+      setSelectedStatus("WATCHED");
+    }
+  }, [isOpen, preferences.defaultPlaylistId]);
 
   const addMovie = api.playlist.addMovie.useMutation({
     onSuccess: () => {
@@ -226,11 +238,7 @@ export default function DetailModal({
                     <Select.Popover>
                       <ListBox selectionMode="multiple">
                         {playlists.map((p) => (
-                          <ListBox.Item
-                            key={p.id}
-                            id={p.id}
-                            textValue={p.name}
-                          >
+                          <ListBox.Item key={p.id} id={p.id} textValue={p.name}>
                             {p.name}
                             <ListBox.ItemIndicator />
                           </ListBox.Item>
@@ -240,24 +248,61 @@ export default function DetailModal({
                   </Select>
                 )}
 
-                {/* Status buttons in 2x2 grid */}
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
-                  {STATUS_BUTTONS.map(
-                    ({ status, label, icon: Icon, variant }) => (
-                      <Button
-                        key={status}
-                        variant={variant}
-                        size="sm"
-                        isPending={isAdding}
-                        isDisabled={selectedPlaylistIds.length === 0}
-                        onPress={() => handleAdd(status)}
-                      >
-                        <Icon size={16} />
-                        {label}
-                      </Button>
-                    ),
-                  )}
-                </div>
+                {/* Status selector + Add button */}
+                {preferences.statusSelectMode === "dropdown" ? (
+                  <div className="flex gap-2">
+                    <Select
+                      defaultSelectedKey="WATCHED"
+                      onSelectionChange={(key) => {
+                        if (key) {
+                          setSelectedStatus(key as typeof selectedStatus);
+                        }
+                      }}
+                      className="flex-1"
+                    >
+                      <Select.Trigger className="w-full border border-separator">
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {STATUS_OPTIONS.map(({ key, label }) => (
+                            <ListBox.Item key={key} id={key} textValue={label}>
+                              {label}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                    <Button
+                      variant="primary"
+                      isPending={isAdding}
+                      isDisabled={selectedPlaylistIds.length === 0}
+                      onPress={() => handleAdd(selectedStatus)}
+                    >
+                      Add to List
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
+                    {STATUS_OPTIONS.map(
+                      ({ key, label, icon: Icon, colorClass }) => (
+                        <Button
+                          key={key}
+                          variant="outline"
+                          size="sm"
+                          className={colorClass}
+                          isPending={isAdding}
+                          isDisabled={selectedPlaylistIds.length === 0}
+                          onPress={() => handleAdd(key)}
+                        >
+                          <Icon size={16} />
+                          {label}
+                        </Button>
+                      ),
+                    )}
+                  </div>
+                )}
               </div>
             </Modal.Footer>
           </Modal.Dialog>

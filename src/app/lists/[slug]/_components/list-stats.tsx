@@ -49,12 +49,13 @@ export default function ListStats({ movies }: ListStatsProps) {
           icon={<PlayIcon size={20} />}
           label="Watching"
           value={stats.watching}
-          color="text-accent"
+          color="text-primary"
         />
         <StatCard
           icon={<CheckIcon size={20} />}
           label="Watched"
           value={stats.watched}
+          color="text-success"
         />
         <StatCard
           icon={<ChartBarIcon size={20} />}

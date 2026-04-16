@@ -71,7 +71,7 @@ function SidebarContent({
 
       {/* Account */}
       <div className="px-1 py-3">
-        <SidebarAccount user={user} />
+        <SidebarAccount user={user} lists={lists} />
       </div>
     </div>
   );

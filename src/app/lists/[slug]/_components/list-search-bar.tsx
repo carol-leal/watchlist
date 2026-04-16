@@ -38,7 +38,7 @@ export default function ListSearchBar({
         >
           <SearchField.Group>
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Search by title, genre, or person..." />
+            <SearchField.Input placeholder="Search by title" />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Button, Chip, Modal, toast } from "@heroui/react";
+import { Button, Chip, ListBox, Modal, Select, toast } from "@heroui/react";
 import {
   ClockIcon,
   PlayIcon,
@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
 import { type PlaylistMovie } from "~/types";
+import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface MovieCardProps {
   movie: PlaylistMovie;
@@ -22,13 +23,51 @@ interface MovieCardProps {
 }
 
 const STATUS_CONFIG = {
-  PENDING: { label: "Pending", color: "secondary" as const, icon: ClockIcon },
-  WATCHING: { label: "Watching", color: "primary" as const, icon: PlayIcon },
-  WATCHED: { label: "Watched", color: undefined, icon: CheckIcon },
-  DROPPED: { label: "Dropped", color: "tertiary" as const, icon: XIcon },
+  PENDING: {
+    label: "Pending",
+    chipColor: "default" as const,
+    chipClass: "text-warning",
+    icon: ClockIcon,
+    activeClass:
+      "bg-warning text-warning-foreground border-warning disabled:opacity-100",
+    inactiveClass: "text-warning border-separator hover:border-warning/50",
+  },
+  WATCHING: {
+    label: "Watching",
+    chipColor: "accent" as const,
+    chipClass: "",
+    icon: PlayIcon,
+    activeClass:
+      "bg-accent text-accent-foreground border-accent disabled:opacity-100",
+    inactiveClass: "text-accent border-separator hover:border-accent/50",
+  },
+  WATCHED: {
+    label: "Watched",
+    chipColor: "default" as const,
+    chipClass: "text-success",
+    icon: CheckIcon,
+    activeClass:
+      "bg-success text-success-foreground border-success disabled:opacity-100",
+    inactiveClass: "text-success border-separator hover:border-success/50",
+  },
+  DROPPED: {
+    label: "Dropped",
+    chipColor: "default" as const,
+    chipClass: "",
+    icon: XIcon,
+    activeClass: "disabled:opacity-100",
+    inactiveClass: "",
+  },
 } as const;
 
-const STATUS_OPTIONS = ["PENDING", "WATCHING", "WATCHED", "DROPPED"] as const;
+const STATUS_KEYS = ["WATCHED", "WATCHING", "PENDING", "DROPPED"] as const;
+
+const STATUS_OPTIONS = [
+  { key: "WATCHED", label: "Set as Watched" },
+  { key: "WATCHING", label: "Set as Watching" },
+  { key: "PENDING", label: "Set as Pending" },
+  { key: "DROPPED", label: "Set as Dropped" },
+] as const;
 
 export default function MovieCard({
   movie,
@@ -37,6 +76,7 @@ export default function MovieCard({
 }: MovieCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { preferences } = useUserPreferences();
 
   const updateStatus = api.playlist.updateMovieStatus.useMutation({
     onSuccess: () => {
@@ -55,7 +95,6 @@ export default function MovieCard({
   });
 
   const currentStatus = STATUS_CONFIG[movie.status];
-  const StatusIcon = currentStatus.icon;
 
   const formattedDate = movie.releaseDate
     ? new Date(movie.releaseDate).toLocaleDateString("en-US", {
@@ -73,7 +112,12 @@ export default function MovieCard({
       >
         {/* Status badge */}
         <div className="absolute right-2 top-2 z-10">
-          <Chip variant={currentStatus.color} size="sm">
+          <Chip
+            color={currentStatus.chipColor}
+            variant="secondary"
+            size="sm"
+            className={currentStatus.chipClass}
+          >
             {currentStatus.label}
           </Chip>
         </div>
@@ -165,29 +209,62 @@ export default function MovieCard({
             className="flex flex-col gap-1.5"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Status buttons */}
-            <div className="flex gap-1">
-              {STATUS_OPTIONS.map((status) => {
-                const config = STATUS_CONFIG[status];
-                const Icon = config.icon;
-                const isActive = movie.status === status;
-                return (
-                  <Button
-                    key={status}
-                    size="sm"
-                    variant={isActive ? config.color : "outline"}
-                    className="flex-1 gap-0.5 px-1 text-[10px]"
-                    isDisabled={isActive || updateStatus.isPending}
-                    onPress={() =>
-                      updateStatus.mutate({ movieId: movie.id, status })
-                    }
-                  >
-                    <Icon size={12} />
-                    <span className="hidden sm:inline">{config.label}</span>
-                  </Button>
-                );
-              })}
-            </div>
+            {/* Status selector */}
+            {preferences.statusSelectMode === "dropdown" ? (
+              <Select
+                defaultSelectedKey={movie.status}
+                onSelectionChange={(key) => {
+                  if (key && key !== movie.status) {
+                    updateStatus.mutate({
+                      movieId: movie.id,
+                      status: key as
+                        | "PENDING"
+                        | "WATCHING"
+                        | "WATCHED"
+                        | "DROPPED",
+                    });
+                  }
+                }}
+                className="w-full"
+              >
+                <Select.Trigger className="w-full border border-separator text-[11px]">
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {STATUS_OPTIONS.map(({ key, label }) => (
+                      <ListBox.Item key={key} id={key} textValue={label}>
+                        {label}
+                      </ListBox.Item>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            ) : (
+              <div className="grid grid-cols-2 gap-1">
+                {STATUS_KEYS.map((status) => {
+                  const config = STATUS_CONFIG[status];
+                  const Icon = config.icon;
+                  const isActive = movie.status === status;
+                  return (
+                    <Button
+                      key={status}
+                      size="sm"
+                      variant="outline"
+                      className={`w-full gap-0.5 px-1 text-[10px] ${isActive ? config.activeClass : config.inactiveClass}`}
+                      isDisabled={isActive || updateStatus.isPending}
+                      onPress={() =>
+                        updateStatus.mutate({ movieId: movie.id, status })
+                      }
+                    >
+                      <Icon size={12} />
+                      {config.label}
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Delete */}
             {confirmDelete ? (
@@ -255,7 +332,12 @@ export default function MovieCard({
                     </>
                   )}
                   <span>•</span>
-                  <Chip variant={currentStatus.color} size="sm">
+                  <Chip
+                    color={currentStatus.chipColor}
+                    variant="secondary"
+                    size="sm"
+                    className={currentStatus.chipClass}
+                  >
                     {currentStatus.label}
                   </Chip>
                 </div>
@@ -324,29 +406,62 @@ export default function MovieCard({
               </Modal.Body>
               <Modal.Footer>
                 <div className="flex w-full flex-col gap-2">
-                  {/* Status buttons */}
-                  <div className="grid grid-cols-4 gap-2">
-                    {STATUS_OPTIONS.map((status) => {
-                      const config = STATUS_CONFIG[status];
-                      const Icon = config.icon;
-                      const isActive = movie.status === status;
-                      return (
-                        <Button
-                          key={status}
-                          size="sm"
-                          variant={isActive ? config.color : "outline"}
-                          className="gap-1"
-                          isDisabled={isActive || updateStatus.isPending}
-                          onPress={() =>
-                            updateStatus.mutate({ movieId: movie.id, status })
-                          }
-                        >
-                          <Icon size={14} />
-                          {config.label}
-                        </Button>
-                      );
-                    })}
-                  </div>
+                  {/* Status selector */}
+                  {preferences.statusSelectMode === "dropdown" ? (
+                    <Select
+                      defaultSelectedKey={movie.status}
+                      onSelectionChange={(key) => {
+                        if (key && key !== movie.status) {
+                          updateStatus.mutate({
+                            movieId: movie.id,
+                            status: key as
+                              | "PENDING"
+                              | "WATCHING"
+                              | "WATCHED"
+                              | "DROPPED",
+                          });
+                        }
+                      }}
+                      className="w-full"
+                    >
+                      <Select.Trigger className="w-full border border-separator">
+                        <Select.Value />
+                        <Select.Indicator />
+                      </Select.Trigger>
+                      <Select.Popover>
+                        <ListBox>
+                          {STATUS_OPTIONS.map(({ key, label }) => (
+                            <ListBox.Item key={key} id={key} textValue={label}>
+                              {label}
+                            </ListBox.Item>
+                          ))}
+                        </ListBox>
+                      </Select.Popover>
+                    </Select>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {STATUS_KEYS.map((status) => {
+                        const config = STATUS_CONFIG[status];
+                        const Icon = config.icon;
+                        const isActive = movie.status === status;
+                        return (
+                          <Button
+                            key={status}
+                            size="sm"
+                            variant="outline"
+                            className={`gap-1 ${isActive ? config.activeClass : config.inactiveClass}`}
+                            isDisabled={isActive || updateStatus.isPending}
+                            onPress={() =>
+                              updateStatus.mutate({ movieId: movie.id, status })
+                            }
+                          >
+                            <Icon size={14} />
+                            {config.label}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Delete */}
                   {confirmDelete ? (

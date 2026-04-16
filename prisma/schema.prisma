@@ -16,24 +16,36 @@ datasource db {
 }
 
 model User {
-  id               String         @id
+  id               String          @id
   name             String //@db.Text
   email            String
-  emailVerified    Boolean        @default(false)
+  emailVerified    Boolean         @default(false)
   image            String? //@db.Text
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now()) @updatedAt
   sessions         Session[]
   accounts         Account[]
   playlistUsers    PlaylistUser[]
-  createdPlaylists Playlist[]     @relation("createdBy")
-  addedMovies      Movie[]        @relation("addedBy")
-  createdMovies    Movie[]        @relation("createdBy")
-  addedSeries      Series[]       @relation("addedBy")
-  createdSeries    Series[]       @relation("createdBy")
+  createdPlaylists Playlist[]      @relation("createdBy")
+  addedMovies      Movie[]         @relation("addedBy")
+  createdMovies    Movie[]         @relation("createdBy")
+  addedSeries      Series[]        @relation("addedBy")
+  createdSeries    Series[]        @relation("createdBy")
+  preferences      UserPreferences?
 
   @@unique([email])
   @@map("user")
+}
+
+model UserPreferences {
+  id                String  @id @default(cuid())
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showListStats     Boolean @default(true)
+  statusSelectMode  String  @default("dropdown") // "dropdown" | "buttons"
+  defaultPlaylistId String?
+
+  @@map("user_preferences")
 }
 
 model Playlist {
