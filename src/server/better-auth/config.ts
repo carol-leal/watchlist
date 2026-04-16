@@ -18,7 +18,7 @@ export const auth = betterAuth({
       clientSecret: env.BETTER_AUTH_DISCORD_CLIENT_SECRET,
       mapProfileToUser: (profile) => {
         return {
-          discordUsername: (profile.username as string) ?? null,
+          discordUsername: profile.username ?? null,
         };
       },
     },

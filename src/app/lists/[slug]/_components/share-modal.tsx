@@ -102,7 +102,6 @@ export default function ShareModal({
                     isDisabled={!username.trim()}
                     onPress={handleInvite}
                   >
-                    <PaperPlaneTiltIcon size={16} />
                     Invite
                   </Button>
                 </div>

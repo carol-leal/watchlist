@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Spinner, Tooltip, toast } from "@heroui/react";
-import { ShareNetworkIcon, TrashIcon } from "@phosphor-icons/react";
+import { PencilSimpleIcon, ShareNetworkIcon, TrashIcon } from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 import ListStats from "./list-stats";
 import MovieCard from "./movie-card";
 import ListSearchBar from "./list-search-bar";
 import ShareModal from "./share-modal";
+import EditListModal from "./edit-list-modal";
 
 interface ListContentProps {
   slug: string;
@@ -20,6 +21,7 @@ export default function ListContent({ slug }: ListContentProps) {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const { preferences } = useUserPreferences();
   const router = useRouter();
 
@@ -102,6 +104,19 @@ export default function ListContent({ slug }: ListContentProps) {
           )}
         </div>
         <div className="flex shrink-0 gap-2">
+          <Tooltip>
+            <Tooltip.Trigger>
+              <Button
+                variant="outline"
+                isIconOnly
+                size="sm"
+                onPress={() => setEditOpen(true)}
+              >
+                <PencilSimpleIcon size={18} />
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content>Edit list</Tooltip.Content>
+          </Tooltip>
           <Tooltip>
             <Tooltip.Trigger>
               <Button
@@ -193,6 +208,15 @@ export default function ListContent({ slug }: ListContentProps) {
           ))}
         </div>
       )}
+
+      {/* Edit modal */}
+      <EditListModal
+        playlistId={playlist.id}
+        currentName={playlist.name}
+        currentDescription={playlist.description}
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+      />
 
       {/* Share modal */}
       <ShareModal

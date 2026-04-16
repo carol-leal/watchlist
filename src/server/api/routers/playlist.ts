@@ -134,6 +134,33 @@ export const playlistRouter = createTRPCRouter({
       });
     }),
 
+  updatePlaylist: protectedProcedure
+    .input(
+      z.object({
+        playlistId: z.string(),
+        name: z.string().min(1).max(100),
+        description: z.string().max(500).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const playlist = await ctx.db.playlist.findUnique({
+        where: { id: input.playlistId },
+        select: { createdById: true },
+      });
+
+      if (playlist?.createdById !== ctx.session.user.id) {
+        throw new Error("Not authorized to edit this list");
+      }
+
+      return ctx.db.playlist.update({
+        where: { id: input.playlistId },
+        data: {
+          name: input.name,
+          description: input.description ?? null,
+        },
+      });
+    }),
+
   deletePlaylist: protectedProcedure
     .input(z.object({ playlistId: z.string() }))
     .mutation(async ({ ctx, input }) => {
