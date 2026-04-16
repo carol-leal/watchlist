@@ -126,7 +126,7 @@ export default function NewListModal({ isOpen, onClose }: NewListModalProps) {
                 variant="primary"
                 size="sm"
                 isDisabled={!name.trim() || createPlaylist.isPending}
-                isLoading={createPlaylist.isPending}
+                isPending={createPlaylist.isPending}
               >
                 Create List
               </Button>

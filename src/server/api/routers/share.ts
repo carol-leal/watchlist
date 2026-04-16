@@ -137,7 +137,7 @@ export const shareRouter = createTRPCRouter({
         where: { id: input.playlistId },
         select: { createdById: true },
       });
-      if (!playlist || playlist.createdById !== ctx.session.user.id) {
+      if (playlist?.createdById !== ctx.session.user.id) {
         throw new Error("Only the owner can remove members");
       }
       if (input.userId === ctx.session.user.id) {

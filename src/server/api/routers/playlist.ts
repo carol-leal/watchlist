@@ -116,7 +116,7 @@ export const playlistRouter = createTRPCRouter({
         select: { createdById: true },
       });
 
-      if (!playlist || playlist.createdById !== ctx.session.user.id) {
+      if (playlist?.createdById !== ctx.session.user.id) {
         throw new Error("Not authorized to delete this list");
       }
 
