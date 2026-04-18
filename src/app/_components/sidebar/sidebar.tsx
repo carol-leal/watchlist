@@ -108,16 +108,18 @@ export default function Sidebar({ user, lists }: SidebarProps) {
 
       {/* Mobile drawer */}
       <Drawer isOpen={drawerOpen} onOpenChange={setDrawerOpen}>
-        <Drawer.Backdrop variant="opaque">
+        <Drawer.Backdrop>
           <Drawer.Content placement="left" className="w-64 bg-surface">
-            <Drawer.Body className="p-0">
-              <SidebarContent
-                user={user}
-                lists={lists}
-                onNavigate={() => setDrawerOpen(false)}
-                onNewList={() => setNewListOpen(true)}
-              />
-            </Drawer.Body>
+            <Drawer.Dialog>
+              <Drawer.Body className="p-0">
+                <SidebarContent
+                  user={user}
+                  lists={lists}
+                  onNavigate={() => setDrawerOpen(false)}
+                  onNewList={() => setNewListOpen(true)}
+                />
+              </Drawer.Body>
+            </Drawer.Dialog>
           </Drawer.Content>
         </Drawer.Backdrop>
       </Drawer>
