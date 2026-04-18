@@ -17,6 +17,8 @@ COPY . .
 RUN pnpm prisma generate
 ENV SKIP_ENV_VALIDATION=1
 RUN pnpm build
+# Extract prisma version for the runner stage
+RUN node -e "process.stdout.write(require('./node_modules/prisma/package.json').version)" > /tmp/prisma-version
 
 # Production runner
 FROM base AS runner
@@ -34,11 +36,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/generated ./generated
 
-# Install prisma CLI with npm (clean install, no pnpm symlink issues)
-COPY --from=builder /app/package.json ./package.json
-RUN PRISMA_VERSION=$(node -e "const p=require('./package.json'); console.log((p.dependencies?.prisma ?? p.devDependencies?.prisma ?? '').replace(/[\\^~]/g,''))") \
-    && npm install prisma@${PRISMA_VERSION} --no-save --no-package-lock \
-    && rm package.json
+# Install prisma CLI in an isolated dir (no package.json = no dependency conflicts)
+COPY --from=builder /tmp/prisma-version /tmp/prisma-version
+RUN npm install prisma@$(cat /tmp/prisma-version) --prefix /tmp/prisma-install --no-package-lock \
+    && cp -r /tmp/prisma-install/node_modules/prisma ./node_modules/prisma \
+    && cp -r /tmp/prisma-install/node_modules/@prisma ./node_modules/@prisma \
+    && rm -rf /tmp/prisma-install /tmp/prisma-version
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
