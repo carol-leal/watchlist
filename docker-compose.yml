@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: watchlist
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: watchlist
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchlist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://watchlist:${DB_PASSWORD:-changeme}@db:5432/watchlist
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_DISCORD_CLIENT_ID: ${BETTER_AUTH_DISCORD_CLIENT_ID}
+      BETTER_AUTH_DISCORD_CLIENT_SECRET: ${BETTER_AUTH_DISCORD_CLIENT_SECRET}
+      TMDB_BEARER: ${TMDB_BEARER}
+      JELLYSEER_URL: ${JELLYSEER_URL:-}
+      JELLYSEER_API_KEY: ${JELLYSEER_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
