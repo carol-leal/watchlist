@@ -17,6 +17,9 @@ COPY . .
 RUN pnpm prisma generate
 ENV SKIP_ENV_VALIDATION=1
 RUN pnpm build
+# Dereference pnpm symlinks so Prisma can be copied to the runner
+RUN cp -rL node_modules/prisma /tmp/prisma-pkg && \
+    cp -rL node_modules/@prisma /tmp/prisma-at-pkg
 
 # Production runner
 FROM base AS runner
@@ -30,12 +33,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma CLI + client for migrations
+# Prisma for migrations (real files, not pnpm symlinks)
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /tmp/prisma-pkg ./node_modules/prisma
+COPY --from=builder /tmp/prisma-at-pkg ./node_modules/@prisma
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
