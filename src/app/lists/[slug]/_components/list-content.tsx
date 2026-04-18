@@ -13,7 +13,7 @@ import { type PlaylistItem, mergePlaylistItems } from "~/types";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 import ListStats from "./list-stats";
 import MovieCard from "./movie-card";
-import ListSearchBar from "./list-search-bar";
+import ListSearchBar, { type SortOption } from "./list-search-bar";
 import ShareModal from "./share-modal";
 import EditListModal from "./edit-list-modal";
 
@@ -24,6 +24,7 @@ interface ListContentProps {
 export default function ListContent({ slug }: ListContentProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [sort, setSort] = useState<SortOption>("added");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -76,8 +77,27 @@ export default function ListContent({ slug }: ListContentProps) {
       );
     }
 
+    // Sort
+    items = [...items].sort((a, b) => {
+      switch (sort) {
+        case "alpha":
+          return a.title.localeCompare(b.title);
+        case "release":
+          return (
+            new Date(b.releaseDate ?? 0).getTime() -
+            new Date(a.releaseDate ?? 0).getTime()
+          );
+        case "rating":
+          return (b.tmdbScore ?? 0) - (a.tmdbScore ?? 0);
+        default: // "added"
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    });
+
     return items;
-  }, [playlist, search, statusFilter]);
+  }, [playlist, search, statusFilter, sort]);
 
   if (isLoading) {
     return (
@@ -185,6 +205,8 @@ export default function ListContent({ slug }: ListContentProps) {
         onSearchChange={setSearch}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        sort={sort}
+        onSortChange={setSort}
         totalFiltered={filtered.length}
         totalAll={playlist.movies.length + playlist.series.length}
       />

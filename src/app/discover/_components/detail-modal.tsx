@@ -59,8 +59,19 @@ export default function DetailModal({
   const [selectedStatus, setSelectedStatus] = useState<
     "PENDING" | "WATCHING" | "WATCHED" | "DROPPED"
   >("WATCHED");
+  const [season, setSeason] = useState(1);
+  const [episode, setEpisode] = useState(1);
   const utils = api.useUtils();
   const { data: playlists } = api.playlist.getUserPlaylists.useQuery();
+
+  const isTv = item?.mediaType === "tv";
+
+  const { data: tvSeasons } = api.tmdb.getTvSeasons.useQuery(
+    { tmdbId: item?.id ?? 0 },
+    { enabled: isTv && isOpen && !!item?.id },
+  );
+
+  const currentSeasonData = tvSeasons?.find((s) => s.seasonNumber === season);
 
   // Reset selections when modal opens with a new item
   useEffect(() => {
@@ -69,6 +80,8 @@ export default function DetailModal({
         preferences.defaultPlaylistId ? [preferences.defaultPlaylistId] : [],
       );
       setSelectedStatus("WATCHED");
+      setSeason(1);
+      setEpisode(1);
     }
   }, [isOpen, preferences.defaultPlaylistId]);
 
@@ -130,7 +143,7 @@ export default function DetailModal({
       if (item.mediaType === "movie") {
         addMovie.mutate(payload);
       } else {
-        addSeries.mutate(payload);
+        addSeries.mutate({ ...payload, currentSeason: season, currentEpisode: episode });
       }
     }
   };
@@ -222,6 +235,78 @@ export default function DetailModal({
             </Modal.Body>
             <Modal.Footer>
               <div className="flex w-full flex-col gap-3">
+                {/* Season / episode for TV shows */}
+                {isTv && (
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs text-muted">Season</p>
+                      <Select
+                        value={String(season)}
+                        onChange={(v) => {
+                          setSeason(Number(v));
+                          setEpisode(1);
+                        }}
+                      >
+                        <Select.Trigger className="w-full border border-separator">
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {tvSeasons
+                              ? tvSeasons.map((s) => (
+                                  <ListBox.Item
+                                    key={String(s.seasonNumber)}
+                                    id={String(s.seasonNumber)}
+                                    textValue={`Season ${s.seasonNumber}`}
+                                  >
+                                    Season {s.seasonNumber}
+                                  </ListBox.Item>
+                                ))
+                              : [1].map((n) => (
+                                  <ListBox.Item
+                                    key={String(n)}
+                                    id={String(n)}
+                                    textValue={`Season ${n}`}
+                                  >
+                                    Season {n}
+                                  </ListBox.Item>
+                                ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      <p className="mb-1 text-xs text-muted">Episode</p>
+                      <Select
+                        value={String(episode)}
+                        onChange={(v) => setEpisode(Number(v))}
+                      >
+                        <Select.Trigger className="w-full border border-separator">
+                          <Select.Value />
+                          <Select.Indicator />
+                        </Select.Trigger>
+                        <Select.Popover>
+                          <ListBox>
+                            {Array.from(
+                              { length: currentSeasonData?.episodeCount ?? 50 },
+                              (_, i) => i + 1,
+                            ).map((n) => (
+                              <ListBox.Item
+                                key={String(n)}
+                                id={String(n)}
+                                textValue={`Episode ${n}`}
+                              >
+                                Episode {n}
+                              </ListBox.Item>
+                            ))}
+                          </ListBox>
+                        </Select.Popover>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
                 {/* Playlist selector */}
                 {playlists && playlists.length > 0 && (
                   <Select

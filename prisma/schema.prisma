@@ -53,12 +53,13 @@ model UserPreferences {
 }
 
 model Playlist {
-  id          String         @id @default(cuid())
-  name        String
-  slug        String         @unique
-  description String? //@db.Text
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id                 String         @id @default(cuid())
+  name               String
+  slug               String         @unique
+  description        String? //@db.Text
+  jellyseerrEnabled  Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   users       PlaylistUser[]
   invitations PlaylistInvitation[]
   movies      Movie[]
@@ -97,17 +98,19 @@ model Movie {
 }
 
 model Series {
-  id          String    @id @default(cuid())
-  tmdbId      Int?
-  title       String
-  description String? //@db.Text
-  image       String? //@db.Text
-  releaseDate DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  status      Status    @default(PENDING)
-  tags        String[] //@db.Text
-  tmdbScore   Float?
+  id             String    @id @default(cuid())
+  tmdbId         Int?
+  title          String
+  description    String? //@db.Text
+  image          String? //@db.Text
+  releaseDate    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  status         Status    @default(PENDING)
+  tags           String[] //@db.Text
+  tmdbScore      Float?
+  currentSeason  Int       @default(1)
+  currentEpisode Int       @default(1)
   addedById   String
   addedBy     User      @relation("addedBy", fields: [addedById], references: [id])
 

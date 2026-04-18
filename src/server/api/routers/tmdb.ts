@@ -79,6 +79,20 @@ export const tmdbRouter = createTRPCRouter({
       };
     }),
 
+  getTvSeasons: protectedProcedure
+    .input(z.object({ tmdbId: z.number() }))
+    .query(async ({ input }) => {
+      const data = await tmdbFetch<{
+        seasons: { season_number: number; episode_count: number; name: string }[];
+      }>(`/tv/${input.tmdbId}`);
+      return (data.seasons ?? [])
+        .filter((s) => s.season_number > 0)
+        .map((s) => ({
+          seasonNumber: s.season_number,
+          episodeCount: s.episode_count,
+        }));
+    }),
+
   getGenres: protectedProcedure.query(async () => {
     const [movieGenres, tvGenres] = await Promise.all([
       tmdbFetch<{ genres: z.infer<typeof tmdbGenreSchema>[] }>(

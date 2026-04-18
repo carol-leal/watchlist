@@ -15,6 +15,8 @@ export const env = createEnv({
     BETTER_AUTH_DISCORD_CLIENT_SECRET: z.string(),
     DATABASE_URL: z.string().url(),
     TMDB_BEARER: z.string(),
+    JELLYSEER_URL: z.string().url().optional(),
+    JELLYSEER_API_KEY: z.string().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -40,6 +42,8 @@ export const env = createEnv({
       process.env.BETTER_AUTH_DISCORD_CLIENT_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     TMDB_BEARER: process.env.TMDB_BEARER,
+    JELLYSEER_URL: process.env.JELLYSEER_URL,
+    JELLYSEER_API_KEY: process.env.JELLYSEER_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
   },
   /**

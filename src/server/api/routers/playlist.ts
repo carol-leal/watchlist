@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  requestMovieOnJellyseerr,
+  requestSeriesOnJellyseerr,
+} from "~/server/jellyseerr";
 
 function slugify(text: string): string {
   return text
@@ -71,7 +75,13 @@ export const playlistRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const movie = await ctx.db.movie.findUniqueOrThrow({
         where: { id: input.movieId },
-        select: { title: true, status: true, playlistId: true },
+        select: {
+          title: true,
+          status: true,
+          playlistId: true,
+          tmdbId: true,
+          playlist: { select: { jellyseerrEnabled: true } },
+        },
       });
       const updated = await ctx.db.movie.update({
         where: { id: input.movieId },
@@ -86,6 +96,9 @@ export const playlistRouter = createTRPCRouter({
           metadata: { oldStatus: movie.status, newStatus: input.status },
         },
       });
+      if (input.status === "WATCHING" && movie.tmdbId && movie.playlist.jellyseerrEnabled) {
+        await requestMovieOnJellyseerr(movie.tmdbId);
+      }
       return updated;
     }),
 
@@ -120,7 +133,14 @@ export const playlistRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const series = await ctx.db.series.findUniqueOrThrow({
         where: { id: input.seriesId },
-        select: { title: true, status: true, playlistId: true },
+        select: {
+          title: true,
+          status: true,
+          playlistId: true,
+          tmdbId: true,
+          currentSeason: true,
+          playlist: { select: { jellyseerrEnabled: true } },
+        },
       });
       const updated = await ctx.db.series.update({
         where: { id: input.seriesId },
@@ -135,7 +155,28 @@ export const playlistRouter = createTRPCRouter({
           metadata: { oldStatus: series.status, newStatus: input.status },
         },
       });
+      if (input.status === "WATCHING" && series.tmdbId && series.playlist.jellyseerrEnabled) {
+        await requestSeriesOnJellyseerr(series.tmdbId, series.currentSeason);
+      }
       return updated;
+    }),
+
+  updateSeriesProgress: protectedProcedure
+    .input(
+      z.object({
+        seriesId: z.string(),
+        currentSeason: z.number().int().min(1),
+        currentEpisode: z.number().int().min(1),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.db.series.update({
+        where: { id: input.seriesId },
+        data: {
+          currentSeason: input.currentSeason,
+          currentEpisode: input.currentEpisode,
+        },
+      });
     }),
 
   deleteSeries: protectedProcedure
@@ -249,6 +290,11 @@ export const playlistRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const playlist = await ctx.db.playlist.findUniqueOrThrow({
+        where: { id: input.playlistId },
+        select: { jellyseerrEnabled: true },
+      });
+
       if (input.tmdbId) {
         const existing = await ctx.db.movie.findFirst({
           where: {
@@ -285,6 +331,9 @@ export const playlistRouter = createTRPCRouter({
           metadata: { status: input.status },
         },
       });
+      if (input.status === "WATCHING" && input.tmdbId && playlist.jellyseerrEnabled) {
+        await requestMovieOnJellyseerr(input.tmdbId);
+      }
       return movie;
     }),
 
@@ -300,9 +349,16 @@ export const playlistRouter = createTRPCRouter({
         tmdbScore: z.number().nullable().optional(),
         tags: z.array(z.string()).default([]),
         status: z.enum(["PENDING", "WATCHING", "WATCHED", "DROPPED"]),
+        currentSeason: z.number().int().min(1).default(1),
+        currentEpisode: z.number().int().min(1).default(1),
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const playlist = await ctx.db.playlist.findUniqueOrThrow({
+        where: { id: input.playlistId },
+        select: { jellyseerrEnabled: true },
+      });
+
       if (input.tmdbId) {
         const existing = await ctx.db.series.findFirst({
           where: {
@@ -325,6 +381,8 @@ export const playlistRouter = createTRPCRouter({
           tmdbScore: input.tmdbScore ?? null,
           tags: input.tags,
           status: input.status,
+          currentSeason: input.currentSeason,
+          currentEpisode: input.currentEpisode,
           playlistId: input.playlistId,
           addedById: ctx.session.user.id,
           createdById: ctx.session.user.id,
@@ -339,6 +397,9 @@ export const playlistRouter = createTRPCRouter({
           metadata: { status: input.status },
         },
       });
+      if (input.status === "WATCHING" && input.tmdbId && playlist.jellyseerrEnabled) {
+        await requestSeriesOnJellyseerr(input.tmdbId, input.currentSeason);
+      }
       return series;
     }),
 });

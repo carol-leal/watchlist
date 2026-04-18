@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button, Chip, ListBox, Modal, Select, toast } from "@heroui/react";
 import {
@@ -11,13 +11,14 @@ import {
   TrashIcon,
   UserIcon,
   StarIcon,
+  TelevisionIcon,
 } from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
-import { type PlaylistMovie } from "~/types";
+import { type PlaylistItem } from "~/types";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface MovieCardProps {
-  movie: PlaylistMovie;
+  movie: PlaylistItem;
   kind?: "movie" | "series";
   onDeleted: () => void;
   onStatusChanged: () => void;
@@ -80,6 +81,28 @@ export default function MovieCard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { preferences } = useUserPreferences();
 
+  const isSeries = movie.kind === "series";
+  const seriesData = isSeries ? movie : null;
+
+  const [season, setSeason] = useState(seriesData?.currentSeason ?? 1);
+  const [episode, setEpisode] = useState(seriesData?.currentEpisode ?? 1);
+
+  useEffect(() => {
+    if (seriesData) {
+      setSeason(seriesData.currentSeason);
+      setEpisode(seriesData.currentEpisode);
+    }
+  }, [seriesData?.currentSeason, seriesData?.currentEpisode]);
+
+  const tmdbId = movie.tmdbId ?? undefined;
+
+  const { data: tvSeasons } = api.tmdb.getTvSeasons.useQuery(
+    { tmdbId: tmdbId! },
+    { enabled: isSeries && isModalOpen && !!tmdbId },
+  );
+
+  const currentSeasonData = tvSeasons?.find((s) => s.seasonNumber === season);
+
   const updateMovieStatus = api.playlist.updateMovieStatus.useMutation({
     onSuccess: () => {
       toast.success("Status updated!");
@@ -91,6 +114,14 @@ export default function MovieCard({
   const updateSeriesStatus = api.playlist.updateSeriesStatus.useMutation({
     onSuccess: () => {
       toast.success("Status updated!");
+      onStatusChanged();
+    },
+    onError: (err: { message: string }) => toast.danger(err.message),
+  });
+
+  const updateSeriesProgress = api.playlist.updateSeriesProgress.useMutation({
+    onSuccess: () => {
+      toast.success("Progress saved!");
       onStatusChanged();
     },
     onError: (err: { message: string }) => toast.danger(err.message),
@@ -133,6 +164,19 @@ export default function MovieCard({
       deleteMovie.mutate({ movieId: movie.id });
     }
   };
+
+  const handleSaveProgress = () => {
+    updateSeriesProgress.mutate({
+      seriesId: movie.id,
+      currentSeason: season,
+      currentEpisode: episode,
+    });
+  };
+
+  const progressChanged =
+    isSeries &&
+    (season !== seriesData?.currentSeason ||
+      episode !== seriesData?.currentEpisode);
 
   const currentStatus = STATUS_CONFIG[movie.status];
 
@@ -206,10 +250,20 @@ export default function MovieCard({
             )}
           </div>
 
+          {/* Season/episode badge for series */}
+          {isSeries && (
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <TelevisionIcon size={12} />
+              <span>
+                S{seriesData!.currentSeason} E{seriesData!.currentEpisode}
+              </span>
+            </div>
+          )}
+
           {/* Tags */}
           {movie.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {movie.tags.slice(0, 3).map((tag) => (
+              {movie.tags.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
                   className="rounded-full border border-separator px-2 py-0.5 text-[10px] text-muted"
@@ -399,7 +453,7 @@ export default function MovieCard({
                     {/* Tags */}
                     {movie.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {movie.tags.map((tag) => (
+                        {movie.tags.map((tag: string) => (
                           <Chip key={tag} variant="secondary" size="sm">
                             {tag}
                           </Chip>
@@ -439,6 +493,102 @@ export default function MovieCard({
               </Modal.Body>
               <Modal.Footer>
                 <div className="flex w-full flex-col gap-2">
+                  {/* Season / episode progress for series */}
+                  {isSeries && (
+                    <div className="flex flex-col gap-2 rounded-lg border border-separator p-3">
+                      <p className="text-xs font-medium text-muted">
+                        Progress
+                      </p>
+                      <div className="flex items-end gap-2">
+                        {/* Season dropdown */}
+                        <div className="flex-1">
+                          <p className="mb-1 text-xs text-muted">Season</p>
+                          <Select
+                            value={String(season)}
+                            onChange={(v) => {
+                              setSeason(Number(v));
+                              setEpisode(1);
+                            }}
+                          >
+                            <Select.Trigger className="w-full border border-separator">
+                              <Select.Value />
+                              <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                              <ListBox>
+                                {tvSeasons
+                                  ? tvSeasons.map((s) => (
+                                      <ListBox.Item
+                                        key={String(s.seasonNumber)}
+                                        id={String(s.seasonNumber)}
+                                        textValue={`Season ${s.seasonNumber}`}
+                                      >
+                                        Season {s.seasonNumber}
+                                      </ListBox.Item>
+                                    ))
+                                  : Array.from(
+                                      { length: season },
+                                      (_, i) => i + 1,
+                                    ).map((n) => (
+                                      <ListBox.Item
+                                        key={String(n)}
+                                        id={String(n)}
+                                        textValue={`Season ${n}`}
+                                      >
+                                        Season {n}
+                                      </ListBox.Item>
+                                    ))}
+                              </ListBox>
+                            </Select.Popover>
+                          </Select>
+                        </div>
+
+                        {/* Episode dropdown */}
+                        <div className="flex-1">
+                          <p className="mb-1 text-xs text-muted">Episode</p>
+                          <Select
+                            value={String(episode)}
+                            onChange={(v) => setEpisode(Number(v))}
+                          >
+                            <Select.Trigger className="w-full border border-separator">
+                              <Select.Value />
+                              <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover>
+                              <ListBox>
+                                {Array.from(
+                                  {
+                                    length:
+                                      currentSeasonData?.episodeCount ?? 50,
+                                  },
+                                  (_, i) => i + 1,
+                                ).map((n) => (
+                                  <ListBox.Item
+                                    key={String(n)}
+                                    id={String(n)}
+                                    textValue={`Episode ${n}`}
+                                  >
+                                    Episode {n}
+                                  </ListBox.Item>
+                                ))}
+                              </ListBox>
+                            </Select.Popover>
+                          </Select>
+                        </div>
+
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          isDisabled={!progressChanged}
+                          isPending={updateSeriesProgress.isPending}
+                          onPress={handleSaveProgress}
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Status selector */}
                   {preferences.statusSelectMode === "dropdown" ? (
                     <Select
