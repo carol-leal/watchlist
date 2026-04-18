@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 RUN npm install -g pnpm@10.32.1
 
 # Install dependencies
@@ -17,9 +17,6 @@ COPY . .
 RUN pnpm prisma generate
 ENV SKIP_ENV_VALIDATION=1
 RUN pnpm build
-# Dereference pnpm symlinks so Prisma can be copied to the runner
-RUN cp -rL node_modules/prisma /tmp/prisma-pkg && \
-    cp -rL node_modules/@prisma /tmp/prisma-at-pkg
 
 # Production runner
 FROM base AS runner
@@ -33,11 +30,15 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma for migrations (real files, not pnpm symlinks)
+# Copy Prisma schema and generated client
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/generated ./generated
-COPY --from=builder /tmp/prisma-pkg ./node_modules/prisma
-COPY --from=builder /tmp/prisma-at-pkg ./node_modules/@prisma
+
+# Install prisma CLI with npm (clean install, no pnpm symlink issues)
+COPY --from=builder /app/package.json ./package.json
+RUN PRISMA_VERSION=$(node -e "const p=require('./package.json'); console.log((p.dependencies?.prisma ?? p.devDependencies?.prisma ?? '').replace(/[\\^~]/g,''))") \
+    && npm install prisma@${PRISMA_VERSION} --no-save --no-package-lock \
+    && rm package.json
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
