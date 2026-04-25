@@ -196,7 +196,11 @@ export default function ListContent({ slug }: ListContentProps) {
 
       {/* Stats */}
       {preferences.showListStats && (
-        <ListStats movies={[...playlist.movies, ...playlist.series]} />
+        <ListStats
+          movies={[...playlist.movies, ...playlist.series]}
+          activeFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+        />
       )}
 
       {/* Search & filters */}
