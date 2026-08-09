@@ -16,6 +16,9 @@ export const auth = betterAuth({
     discord: {
       clientId: env.BETTER_AUTH_DISCORD_CLIENT_ID,
       clientSecret: env.BETTER_AUTH_DISCORD_CLIENT_SECRET,
+      // Discord avatar URLs embed the avatar hash, so the stored URL 404s once a
+      // user changes their picture. Re-read the profile on every sign-in.
+      overrideUserInfoOnSignIn: true,
       mapProfileToUser: (profile) => {
         return {
           discordUsername: profile.username ?? null,
