@@ -14,7 +14,7 @@ import {
   TelevisionIcon,
 } from "@phosphor-icons/react";
 import { api } from "~/trpc/react";
-import { type PlaylistItem } from "~/types";
+import type { PlaylistItem } from "~/types";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface MovieCardProps {

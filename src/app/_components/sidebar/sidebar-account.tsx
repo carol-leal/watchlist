@@ -13,7 +13,7 @@ import { GearIcon, SignOutIcon } from "@phosphor-icons/react";
 import { authClient } from "~/server/better-auth/client";
 import { useRouter } from "next/navigation";
 import { useUserPreferences } from "../user-preferences";
-import { type UserPlaylists } from "~/types";
+import type { UserPlaylists } from "~/types";
 
 interface SidebarAccountProps {
   user: {

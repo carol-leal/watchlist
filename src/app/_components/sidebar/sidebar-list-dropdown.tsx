@@ -9,7 +9,7 @@ import {
   FolderIcon,
   PopcornIcon,
 } from "@phosphor-icons/react";
-import { type UserPlaylists } from "~/types";
+import type { UserPlaylists } from "~/types";
 
 interface SidebarListDropdownProps {
   lists: UserPlaylists;

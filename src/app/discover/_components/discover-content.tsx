@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Spinner } from "@heroui/react";
 import { api } from "~/trpc/react";
-import { type TmdbSearchResult } from "~/types";
+import type { TmdbSearchResult } from "~/types";
 import SearchBar from "./search-bar";
 import ResultCard from "./result-card";
 import DetailModal from "./detail-modal";

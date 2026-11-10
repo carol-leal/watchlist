@@ -10,7 +10,7 @@ import {
   ChartBarIcon,
 } from "@phosphor-icons/react";
 import { ProgressBar } from "@heroui/react";
-import { type PlaylistMovie } from "~/types";
+import type { PlaylistMovie } from "~/types";
 
 interface ListStatsProps {
   movies: PlaylistMovie[];

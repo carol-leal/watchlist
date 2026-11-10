@@ -24,6 +24,10 @@ export default tseslint.config(
         "warn",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
+      // With verbatimModuleSyntax, `import { type X } from "y"` keeps a
+      // side-effect `import "y"`, which can pull server modules into client
+      // bundles. Require `import type { X }` when every specifier is a type.
+      "@typescript-eslint/no-import-type-side-effects": "error",
       "@typescript-eslint/no-unused-vars": [
         "warn",
         { argsIgnorePattern: "^_" },

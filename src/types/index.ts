@@ -1,4 +1,4 @@
-import { type RouterOutputs, type RouterInputs } from "~/trpc/react";
+import type { RouterOutputs, RouterInputs } from "~/trpc/react";
 
 // TMDB
 export type TmdbSearchResult =

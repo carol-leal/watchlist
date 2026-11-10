@@ -9,7 +9,7 @@ import SidebarItem from "./sidebar-item";
 import SidebarListDropdown from "./sidebar-list-dropdown";
 import SidebarAccount from "./sidebar-account";
 import NewListModal from "./new-list-modal";
-import { type UserPlaylists } from "~/types";
+import type { UserPlaylists } from "~/types";
 
 interface SidebarProps {
   user: {

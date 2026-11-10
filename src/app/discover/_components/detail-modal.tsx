@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { type Key } from "@heroui/react";
+import type { Key } from "@heroui/react";
 import {
   Modal,
   Button,
@@ -14,7 +14,7 @@ import {
 import { ClockIcon, PlayIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import Image from "next/image";
 import { api } from "~/trpc/react";
-import { type TmdbSearchResult, type TmdbGenreMap } from "~/types";
+import type { TmdbSearchResult, TmdbGenreMap } from "~/types";
 import { useUserPreferences } from "~/app/_components/user-preferences";
 
 interface DetailModalProps {
